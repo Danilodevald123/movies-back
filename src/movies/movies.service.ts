@@ -3,10 +3,14 @@ import {
   NotFoundException,
   Logger,
   ConflictException,
+  BadRequestException,
+  InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { validate as isValidUUID } from 'uuid';
 import { Movie } from './entities/movie.entity';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
@@ -40,51 +44,178 @@ export class MoviesService {
   ) {}
 
   async create(createMovieDto: CreateMovieDto, userId: string): Promise<Movie> {
-    const movie = this.movieRepository.create({
-      ...createMovieDto,
-      createdById: userId,
-    });
-    return await this.movieRepository.save(movie);
+    this.logger.log(`Creating new movie: "${createMovieDto.title}"`);
+
+    try {
+      const movie = this.movieRepository.create({
+        ...createMovieDto,
+        createdById: userId,
+      });
+
+      const savedMovie = await this.movieRepository.save(movie);
+      this.logger.log(`Movie created successfully: ${savedMovie.id}`);
+
+      return savedMovie;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create movie "${createMovieDto.title}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      if (error instanceof Error && error.message.includes('duplicate')) {
+        throw new ConflictException('A movie with similar data already exists');
+      }
+
+      throw new InternalServerErrorException(
+        'Failed to create movie. Please try again later.',
+      );
+    }
   }
 
   async findAll(): Promise<Movie[]> {
-    return await this.movieRepository.find({
-      order: { releaseDate: 'DESC' },
-    });
+    this.logger.log('Fetching all movies');
+
+    try {
+      const movies = await this.movieRepository.find({
+        order: { releaseDate: 'DESC' },
+      });
+
+      this.logger.log(`Retrieved ${movies.length} movies`);
+      return movies;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch movies: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      throw new InternalServerErrorException(
+        'Failed to retrieve movies. Please try again later.',
+      );
+    }
   }
 
   async findOne(id: string): Promise<Movie> {
-    const movie = await this.movieRepository.findOne({ where: { id } });
+    this.logger.log(`Fetching movie with ID: ${id}`);
 
-    if (!movie) {
-      throw new NotFoundException(`Movie with ID ${id} not found`);
+    if (!isValidUUID(id)) {
+      this.logger.warn(`Invalid UUID format: ${id}`);
+      throw new BadRequestException('Invalid movie ID format');
     }
 
-    return movie;
+    try {
+      const movie = await this.movieRepository.findOne({ where: { id } });
+
+      if (!movie) {
+        this.logger.warn(`Movie not found: ${id}`);
+        throw new NotFoundException(`Movie with ID ${id} not found`);
+      }
+
+      this.logger.log(`Movie found: ${movie.title}`);
+      return movie;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      this.logger.error(
+        `Failed to fetch movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      throw new InternalServerErrorException(
+        'Failed to retrieve movie. Please try again later.',
+      );
+    }
   }
 
   async update(id: string, updateMovieDto: UpdateMovieDto): Promise<Movie> {
+    this.logger.log(`Updating movie: ${id}`);
+
     const movie = await this.findOne(id);
 
-    Object.assign(movie, updateMovieDto);
-    return await this.movieRepository.save(movie);
+    try {
+      Object.assign(movie, updateMovieDto);
+      const updatedMovie = await this.movieRepository.save(movie);
+
+      this.logger.log(`Movie updated successfully: ${updatedMovie.title}`);
+      return updatedMovie;
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+
+      this.logger.error(
+        `Failed to update movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      throw new InternalServerErrorException(
+        'Failed to update movie. Please try again later.',
+      );
+    }
   }
 
   async remove(id: string): Promise<void> {
+    this.logger.log(`Deleting movie: ${id}`);
+
     const movie = await this.findOne(id);
-    await this.movieRepository.remove(movie);
+
+    try {
+      await this.movieRepository.remove(movie);
+      this.logger.log(`Movie deleted successfully: ${movie.title}`);
+    } catch (error) {
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+
+      this.logger.error(
+        `Failed to delete movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      throw new InternalServerErrorException(
+        'Failed to delete movie. Please try again later.',
+      );
+    }
   }
 
   async syncWithSwapi(): Promise<{ synced: number; errors: number }> {
     this.logger.log('Starting SWAPI synchronization...');
 
     const swapiUrl = this.configService.get<string>('SWAPI_BASE_URL');
+
+    if (!swapiUrl) {
+      this.logger.error('SWAPI_BASE_URL not configured');
+      throw new InternalServerErrorException('SWAPI URL not configured');
+    }
+
     let synced = 0;
     let errors = 0;
 
     try {
-      const response = await fetch(`${swapiUrl}/films`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(`${swapiUrl}/films`, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(
+          `SWAPI returned status ${response.status}: ${response.statusText}`,
+        );
+      }
+
       const data = (await response.json()) as SwapiResponse;
+
+      if (!data.result || !Array.isArray(data.result)) {
+        throw new Error('Invalid SWAPI response format');
+      }
 
       this.logger.log(`Fetched ${data.result.length} films from SWAPI`);
 
@@ -114,7 +245,7 @@ export class MoviesService {
 
           await this.movieRepository.save(movie);
           synced++;
-          this.logger.log(`✅ Synced: ${film.properties.title}`);
+          this.logger.log(`Synced: ${film.properties.title}`);
         } catch (error) {
           errors++;
           const errorMessage =
@@ -130,8 +261,34 @@ export class MoviesService {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to fetch from SWAPI: ${errorMessage}`);
-      throw new ConflictException('Failed to sync with SWAPI');
+
+      this.logger.error(
+        `Failed to sync with SWAPI: ${errorMessage}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new InternalServerErrorException(
+            'SWAPI request timed out. Please try again later.',
+          );
+        }
+
+        if (error.message.includes('fetch failed')) {
+          throw new InternalServerErrorException(
+            'Unable to connect to SWAPI. Please check your internet connection.',
+          );
+        }
+
+        if (error.message.includes('Invalid SWAPI response')) {
+          throw new InternalServerErrorException(
+            'Received invalid data from SWAPI. Please try again later.',
+          );
+        }
+      }
+      throw new InternalServerErrorException(
+        'Failed to sync with SWAPI. Please try again later.',
+      );
     }
   }
 }
