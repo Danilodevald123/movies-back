@@ -10,6 +10,7 @@ import { getDatabaseConfig } from './config/database.config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { MoviesModule } from './movies/movies.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     }),
     UsersModule,
     AuthModule,
+    MoviesModule,
   ],
   controllers: [AppController],
   providers: [
