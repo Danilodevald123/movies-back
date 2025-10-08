@@ -92,6 +92,18 @@ describe('MoviesService', () => {
         InternalServerErrorException,
       );
     });
+
+    it('should throw ConflictException on duplicate error', async () => {
+      const duplicateError = new Error(
+        'duplicate key value violates unique constraint',
+      );
+      mockRepository.create.mockReturnValue(mockMovie);
+      mockRepository.save.mockRejectedValue(duplicateError);
+
+      await expect(service.create(createDto, 'user-123')).rejects.toThrow(
+        'A movie with similar data already exists',
+      );
+    });
   });
 
   describe('findAll', () => {
@@ -205,6 +217,15 @@ describe('MoviesService', () => {
         NotFoundException,
       );
     });
+
+    it('should throw InternalServerErrorException on database error during remove', async () => {
+      mockRepository.findOne.mockResolvedValue(mockMovie);
+      mockRepository.remove.mockRejectedValue(new Error('DB Error'));
+
+      await expect(service.remove(validUuid)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
   });
 
   describe('syncWithSwapi', () => {
@@ -293,6 +314,52 @@ describe('MoviesService', () => {
 
       await expect(service.syncWithSwapi()).rejects.toThrow(
         InternalServerErrorException,
+      );
+    });
+
+    it('should throw InternalServerErrorException on invalid response format', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ message: 'ok', result: null }),
+      });
+
+      await expect(service.syncWithSwapi()).rejects.toThrow(
+        'Received invalid data from SWAPI. Please try again later.',
+      );
+    });
+
+    it('should handle errors during individual movie sync', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.create.mockReturnValue(mockMovie);
+      mockRepository.save.mockRejectedValue(new Error('Save failed'));
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockSwapiResponse),
+      });
+
+      const result = await service.syncWithSwapi();
+
+      expect(result.synced).toBe(0);
+      expect(result.errors).toBe(1);
+    });
+
+    it('should throw InternalServerErrorException on timeout', async () => {
+      const abortError = new Error('The operation was aborted');
+      abortError.name = 'AbortError';
+      (global.fetch as jest.Mock).mockRejectedValue(abortError);
+
+      await expect(service.syncWithSwapi()).rejects.toThrow(
+        'SWAPI request timed out. Please try again later.',
+      );
+    });
+
+    it('should throw InternalServerErrorException on fetch failure', async () => {
+      const fetchError = new Error('fetch failed');
+      (global.fetch as jest.Mock).mockRejectedValue(fetchError);
+
+      await expect(service.syncWithSwapi()).rejects.toThrow(
+        'Unable to connect to SWAPI. Please check your internet connection.',
       );
     });
   });
