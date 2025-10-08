@@ -3,8 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 import { getDatabaseConfig } from './config/database.config';
 import { UsersModule } from './users/users.module';
@@ -28,9 +26,8 @@ import { MoviesModule } from './movies/movies.module';
     AuthModule,
     MoviesModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
