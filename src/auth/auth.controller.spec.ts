@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserRole } from '../users/entities/user.entity';
 
 describe('AuthController', () => {
@@ -18,12 +17,6 @@ describe('AuthController', () => {
     },
     accessToken: 'access-token',
     refreshToken: 'refresh-token',
-  };
-
-  const mockUser = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    email: 'test@example.com',
-    role: UserRole.USER,
   };
 
   const mockAuthService = {
@@ -41,10 +34,7 @@ describe('AuthController', () => {
           useValue: mockAuthService,
         },
       ],
-    })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
-      .compile();
+    }).compile();
 
     controller = module.get<AuthController>(AuthController);
 
@@ -102,14 +92,6 @@ describe('AuthController', () => {
 
       expect(refreshMock).toHaveBeenCalledWith(refreshTokenDto.refreshToken);
       expect(result).toEqual(mockAuthResponse);
-    });
-  });
-
-  describe('getProfile', () => {
-    it('should return user profile', () => {
-      const result = controller.getProfile(mockUser);
-
-      expect(result).toEqual(mockUser);
     });
   });
 });

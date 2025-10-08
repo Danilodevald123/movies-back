@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { User } from '../users/entities/user.entity';
+import { UserRole } from '../users/entities/user.entity';
 
 export interface JwtPayload {
   sub: string;
@@ -63,7 +63,11 @@ export class AuthService {
     }
   }
 
-  private generateTokens(user: User): AuthResponse {
+  private generateTokens(user: {
+    id: string;
+    email: string;
+    role: UserRole;
+  }): AuthResponse {
     const accessPayload: JwtPayload = {
       sub: user.id,
       email: user.email,

@@ -14,17 +14,26 @@ describe('UsersController', () => {
       email: 'user1@example.com',
       role: UserRole.USER,
       createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: '223e4567-e89b-12d3-a456-426614174001',
       email: 'admin@example.com',
       role: UserRole.ADMIN,
       createdAt: new Date(),
+      updatedAt: new Date(),
     },
   ];
 
+  const mockUser = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    email: 'user1@example.com',
+    role: UserRole.USER,
+  };
+
   const mockUsersService = {
     findAll: jest.fn(),
+    getProfile: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -50,6 +59,22 @@ describe('UsersController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getProfile', () => {
+    it('should return current user profile', async () => {
+      const jwtUser = {
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role,
+      };
+      mockUsersService.getProfile.mockResolvedValue(mockUser);
+
+      const result = await controller.getProfile(jwtUser);
+
+      expect(mockUsersService.getProfile).toHaveBeenCalledWith(jwtUser.id);
+      expect(result).toEqual(mockUser);
+    });
   });
 
   describe('findAll', () => {
