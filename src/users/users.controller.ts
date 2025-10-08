@@ -11,16 +11,37 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole, User } from './entities/user.entity';
+import { UserRole } from './entities/user.entity';
+import { UserResponseDto } from './dto/user-response.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('me')
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Returns the authenticated user profile information',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: UserResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
+  })
+  async getProfile(@CurrentUser() user: JwtUser): Promise<UserResponseDto> {
+    return this.usersService.getProfile(user.id);
+  }
+
   @Get()
+  @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Get all users',
@@ -30,24 +51,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'List of all users',
-    schema: {
-      example: [
-        {
-          id: '123e4567-e89b-12d3-a456-426614174000',
-          email: 'user@example.com',
-          role: 'user',
-          createdAt: '2025-01-08T10:30:00.000Z',
-          updatedAt: '2025-01-08T10:30:00.000Z',
-        },
-        {
-          id: '456e7890-e89b-12d3-a456-426614174001',
-          email: 'admin@example.com',
-          role: 'admin',
-          createdAt: '2025-01-08T10:30:00.000Z',
-          updatedAt: '2025-01-08T10:30:00.000Z',
-        },
-      ],
-    },
+    type: [UserResponseDto],
   })
   @ApiUnauthorizedResponse({
     description: 'Unauthorized - invalid or missing JWT token',
@@ -55,7 +59,7 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: 'Forbidden - user does not have ADMIN role',
   })
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserResponseDto[]> {
     return this.usersService.findAll();
   }
 }

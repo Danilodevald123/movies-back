@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -15,7 +16,7 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const existingUser = await this.userRepository.findOne({
       where: { email: createUserDto.email },
     });
@@ -25,7 +26,8 @@ export class UsersService {
     }
 
     const user = this.userRepository.create(createUserDto);
-    return await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    return this.toResponseDto(savedUser);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -41,9 +43,23 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<User[]> {
-    return await this.userRepository.find({
-      select: ['id', 'email', 'role', 'createdAt'],
-    });
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.userRepository.find();
+    return users.map((user) => this.toResponseDto(user));
+  }
+
+  async getProfile(userId: string): Promise<UserResponseDto> {
+    const user = await this.findById(userId);
+    return this.toResponseDto(user);
+  }
+
+  private toResponseDto(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }
