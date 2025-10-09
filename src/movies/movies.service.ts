@@ -4,14 +4,16 @@ import {
   Logger,
   ConflictException,
   InternalServerErrorException,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Movie } from './entities/movie.entity';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { MovieResponseDto } from './dto/movie-response.dto';
+import {
+  IMovieRepository,
+  MOVIE_REPOSITORY,
+} from './repositories/movie.repository.interface';
 
 interface SwapiFilm {
   properties: {
@@ -36,8 +38,8 @@ export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
 
   constructor(
-    @InjectRepository(Movie)
-    private readonly movieRepository: Repository<Movie>,
+    @Inject(MOVIE_REPOSITORY)
+    private readonly movieRepository: IMovieRepository,
     private readonly configService: ConfigService,
   ) {}
 
@@ -46,9 +48,9 @@ export class MoviesService {
     userId: string,
   ): Promise<MovieResponseDto> {
     if (createMovieDto.episodeId) {
-      const existingByEpisode = await this.movieRepository.findOne({
-        where: { episodeId: createMovieDto.episodeId },
-      });
+      const existingByEpisode = await this.movieRepository.findByEpisodeId(
+        createMovieDto.episodeId,
+      );
       if (existingByEpisode) {
         throw new ConflictException(
           `Episode ${createMovieDto.episodeId} already exists`,
@@ -58,6 +60,7 @@ export class MoviesService {
 
     const movie = this.movieRepository.create({
       ...createMovieDto,
+      releaseDate: new Date(createMovieDto.releaseDate),
       createdById: userId,
     });
 
@@ -66,14 +69,15 @@ export class MoviesService {
   }
 
   async findAll(): Promise<MovieResponseDto[]> {
-    const movies = await this.movieRepository.find({
-      order: { releaseDate: 'DESC' },
+    const movies = await this.movieRepository.findAll({
+      field: 'releaseDate',
+      direction: 'DESC',
     });
     return movies.map((movie) => MovieResponseDto.fromEntity(movie));
   }
 
   async findOne(id: string): Promise<MovieResponseDto> {
-    const movie = await this.movieRepository.findOne({ where: { id } });
+    const movie = await this.movieRepository.findById(id);
 
     if (!movie) {
       throw new NotFoundException(`Movie with ID ${id} not found`);
@@ -86,7 +90,7 @@ export class MoviesService {
     id: string,
     updateMovieDto: UpdateMovieDto,
   ): Promise<MovieResponseDto> {
-    const movie = await this.movieRepository.findOne({ where: { id } });
+    const movie = await this.movieRepository.findById(id);
 
     if (!movie) {
       throw new NotFoundException(`Movie with ID ${id} not found`);
@@ -98,7 +102,7 @@ export class MoviesService {
   }
 
   async remove(id: string): Promise<void> {
-    const movie = await this.movieRepository.findOne({ where: { id } });
+    const movie = await this.movieRepository.findById(id);
 
     if (!movie) {
       throw new NotFoundException(`Movie with ID ${id} not found`);
@@ -146,9 +150,9 @@ export class MoviesService {
 
       for (const film of data.result) {
         try {
-          const existingMovie = await this.movieRepository.findOne({
-            where: { swapiId: film.uid },
-          });
+          const existingMovie = await this.movieRepository.findBySwapiId(
+            film.uid,
+          );
 
           if (existingMovie) {
             this.logger.log(
