@@ -24,6 +24,7 @@ import {
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { MoviesService } from './movies.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
@@ -43,6 +44,7 @@ export class MoviesController {
 
   @Get()
   @Public()
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({
     summary: 'Get all movies',
     description:

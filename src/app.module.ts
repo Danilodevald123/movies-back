@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { validate } from './config/env.validation';
 import { getDatabaseConfig } from './config/database.config';
 import { UsersModule } from './users/users.module';
@@ -17,6 +18,12 @@ import { MoviesModule } from './movies/movies.module';
       validate,
       envFilePath: '.env',
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 segundos
+        limit: 100, // Límite por defecto (fallback)
+      },
+    ]),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
@@ -28,6 +35,10 @@ import { MoviesModule } from './movies/movies.module';
   ],
   controllers: [],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
