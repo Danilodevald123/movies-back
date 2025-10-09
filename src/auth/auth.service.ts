@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserRole } from '../users/entities/user.entity';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 export interface JwtPayload {
   sub: string;
@@ -14,11 +14,7 @@ export interface JwtPayload {
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
+  user: UserResponseDto;
   accessToken: string;
   refreshToken: string;
 }
@@ -43,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
       // TODO : Maybe i will change the exception for two diferent cases
     }
-    return this.generateTokens(user);
+    return this.generateTokens(UserResponseDto.fromEntity(user));
   }
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
@@ -57,17 +53,13 @@ export class AuthService {
       }
 
       const user = await this.usersService.findById(payload.sub);
-      return this.generateTokens(user);
+      return this.generateTokens(UserResponseDto.fromEntity(user));
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
-  private generateTokens(user: {
-    id: string;
-    email: string;
-    role: UserRole;
-  }): AuthResponse {
+  private generateTokens(user: UserResponseDto): AuthResponse {
     const accessPayload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -91,11 +83,7 @@ export class AuthService {
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
+      user,
       accessToken,
       refreshToken,
     };
