@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../entities/user.entity';
+import { User, UserRole } from '../entities/user.entity';
 
 export class UserResponseDto {
   @ApiProperty({
@@ -32,4 +32,14 @@ export class UserResponseDto {
     example: '2025-01-08T10:30:00.000Z',
   })
   updatedAt: Date;
+
+  static fromEntity(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
 }

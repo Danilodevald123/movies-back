@@ -27,7 +27,7 @@ export class UsersService {
 
     const user = this.userRepository.create(createUserDto);
     const savedUser = await this.userRepository.save(user);
-    return this.toResponseDto(savedUser);
+    return UserResponseDto.fromEntity(savedUser);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -45,21 +45,11 @@ export class UsersService {
 
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.userRepository.find();
-    return users.map((user) => this.toResponseDto(user));
+    return users.map((user) => UserResponseDto.fromEntity(user));
   }
 
   async getProfile(userId: string): Promise<UserResponseDto> {
     const user = await this.findById(userId);
-    return this.toResponseDto(user);
-  }
-
-  private toResponseDto(user: User): UserResponseDto {
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return UserResponseDto.fromEntity(user);
   }
 }
