@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -227,22 +227,24 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if token verification fails', async () => {
+    it('should propagate JWT verification errors', async () => {
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
       await expect(service.refreshToken(refreshToken)).rejects.toThrow(
-        UnauthorizedException,
+        'Invalid token',
       );
     });
 
-    it('should throw UnauthorizedException if user not found', async () => {
+    it('should propagate user not found errors', async () => {
       mockJwtService.verify.mockReturnValue(validPayload);
-      mockUsersService.findById.mockRejectedValue(new Error('User not found'));
+      mockUsersService.findById.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await expect(service.refreshToken(refreshToken)).rejects.toThrow(
-        UnauthorizedException,
+        NotFoundException,
       );
     });
   });

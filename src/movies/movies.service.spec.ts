@@ -3,12 +3,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   NotFoundException,
+  ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { Movie } from './entities/movie.entity';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
+import { MovieResponseDto } from './dto/movie-response.dto';
 
 describe('MoviesService', () => {
   let service: MoviesService;
@@ -21,7 +23,23 @@ describe('MoviesService', () => {
     director: 'Test Director',
     producer: 'Test Producer',
     releaseDate: new Date('2024-01-01'),
+    swapiId: '1',
+    swapiUrl: 'https://swapi.tech/api/films/1',
     createdById: 'user-123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockMovieResponse: MovieResponseDto = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    title: 'Test Movie',
+    episodeId: 1,
+    openingCrawl: 'Test crawl',
+    director: 'Test Director',
+    producer: 'Test Producer',
+    releaseDate: new Date('2024-01-01'),
+    swapiId: '1',
+    swapiUrl: 'https://swapi.tech/api/films/1',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -70,6 +88,7 @@ describe('MoviesService', () => {
     };
 
     it('should create a new movie', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockResolvedValue(mockMovie);
 
@@ -80,28 +99,29 @@ describe('MoviesService', () => {
         createdById: 'user-123',
       });
       expect(mockRepository.save).toHaveBeenCalledWith(mockMovie);
-      expect(result).toEqual(mockMovie);
+      expect(result).toEqual(mockMovieResponse);
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
+    it('should propagate database errors', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockRejectedValue(new Error('DB Error'));
 
       await expect(service.create(createDto, 'user-123')).rejects.toThrow(
-        InternalServerErrorException,
+        'DB Error',
       );
     });
 
-    it('should throw ConflictException on duplicate error', async () => {
-      const duplicateError = new Error(
-        'duplicate key value violates unique constraint',
-      );
-      mockRepository.create.mockReturnValue(mockMovie);
-      mockRepository.save.mockRejectedValue(duplicateError);
+    it('should throw ConflictException if episodeId already exists', async () => {
+      const createDtoWithEpisode = { ...createDto, episodeId: 4 };
+      mockRepository.findOne.mockResolvedValue(mockMovie);
 
-      await expect(service.create(createDto, 'user-123')).rejects.toThrow(
-        'A movie with similar data already exists',
-      );
+      await expect(
+        service.create(createDtoWithEpisode, 'user-123'),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        service.create(createDtoWithEpisode, 'user-123'),
+      ).rejects.toThrow('Episode 4 already exists');
     });
   });
 
@@ -115,15 +135,13 @@ describe('MoviesService', () => {
       expect(mockRepository.find).toHaveBeenCalledWith({
         order: { releaseDate: 'DESC' },
       });
-      expect(result).toEqual(movies);
+      expect(result).toEqual([mockMovieResponse]);
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
+    it('should propagate database errors', async () => {
       mockRepository.find.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.findAll()).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.findAll()).rejects.toThrow('DB Error');
     });
   });
 
@@ -138,7 +156,7 @@ describe('MoviesService', () => {
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: validUuid },
       });
-      expect(result).toEqual(mockMovie);
+      expect(result).toEqual(mockMovieResponse);
     });
 
     it('should throw NotFoundException if movie not found', async () => {
@@ -149,12 +167,10 @@ describe('MoviesService', () => {
       );
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
+    it('should propagate database errors', async () => {
       mockRepository.findOne.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.findOne(validUuid)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.findOne(validUuid)).rejects.toThrow('DB Error');
     });
   });
 
@@ -210,13 +226,11 @@ describe('MoviesService', () => {
       );
     });
 
-    it('should throw InternalServerErrorException on database error during remove', async () => {
+    it('should propagate database errors during remove', async () => {
       mockRepository.findOne.mockResolvedValue(mockMovie);
       mockRepository.remove.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.remove(validUuid)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.remove(validUuid)).rejects.toThrow('DB Error');
     });
   });
 

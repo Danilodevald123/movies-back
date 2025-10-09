@@ -37,26 +37,21 @@ export class AuthService {
 
     if (!user || !(await user.comparePassword(loginDto.password))) {
       throw new UnauthorizedException('Invalid credentials');
-      // TODO : Maybe i will change the exception for two diferent cases
     }
     return this.generateTokens(UserResponseDto.fromEntity(user));
   }
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+    const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
 
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      const user = await this.usersService.findById(payload.sub);
-      return this.generateTokens(UserResponseDto.fromEntity(user));
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
     }
+
+    const user = await this.usersService.findById(payload.sub);
+    return this.generateTokens(UserResponseDto.fromEntity(user));
   }
 
   private generateTokens(user: UserResponseDto): AuthResponse {
