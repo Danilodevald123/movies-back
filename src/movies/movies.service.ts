@@ -10,7 +10,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { validate as isValidUUID } from 'uuid';
 import { Movie } from './entities/movie.entity';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
@@ -96,11 +95,6 @@ export class MoviesService {
 
   async findOne(id: string): Promise<Movie> {
     this.logger.log(`Fetching movie with ID: ${id}`);
-
-    if (!isValidUUID(id)) {
-      this.logger.warn(`Invalid UUID format: ${id}`);
-      throw new BadRequestException('Invalid movie ID format');
-    }
 
     try {
       const movie = await this.movieRepository.findOne({ where: { id } });

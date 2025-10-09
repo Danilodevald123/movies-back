@@ -3,7 +3,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   NotFoundException,
-  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
@@ -140,13 +139,6 @@ describe('MoviesService', () => {
         where: { id: validUuid },
       });
       expect(result).toEqual(mockMovie);
-    });
-
-    it('should throw BadRequestException for invalid UUID', async () => {
-      await expect(service.findOne('invalid-uuid')).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(mockRepository.findOne).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if movie not found', async () => {
