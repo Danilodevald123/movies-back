@@ -11,6 +11,8 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { MoviesModule } from './movies/movies.module';
+import { QuizModule } from './quiz/quiz.module';
+import { RankingModule } from './ranking/ranking.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { MoviesModule } from './movies/movies.module';
     UsersModule,
     AuthModule,
     MoviesModule,
+    QuizModule,
+    RankingModule,
   ],
   controllers: [],
   providers: [
