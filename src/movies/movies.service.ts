@@ -7,6 +7,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { MovieResponseDto } from './dto/movie-response.dto';
@@ -109,6 +110,19 @@ export class MoviesService {
     }
 
     await this.movieRepository.remove(movie);
+  }
+
+  @Cron(CronExpression.EVERY_SECOND)
+  async scheduledSwapiSync() {
+    this.logger.log('Starting scheduled SWAPI sync (cron job)');
+    try {
+      const result = await this.syncWithSwapi();
+      this.logger.log(
+        `Scheduled sync completed: ${result.synced} synced, ${result.errors} errors`,
+      );
+    } catch (error) {
+      this.logger.error('Scheduled sync failed', error);
+    }
   }
 
   async syncWithSwapi(): Promise<{ synced: number; errors: number }> {

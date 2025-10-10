@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -18,10 +19,11 @@ import { MoviesModule } from './movies/movies.module';
       validate,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 60 segundos
-        limit: 100, // Límite por defecto (fallback)
+        ttl: 60000,
+        limit: 100,
       },
     ]),
     TypeOrmModule.forRootAsync({
