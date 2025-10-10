@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -16,7 +16,17 @@ describe('AuthService', () => {
     email: 'test@example.com',
     password: 'hashedPassword',
     role: UserRole.USER,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     comparePassword: jest.fn(),
+  };
+
+  const mockUserResponse = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    email: 'test@example.com',
+    role: UserRole.USER,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockUsersService = {
@@ -77,7 +87,7 @@ describe('AuthService', () => {
     };
 
     it('should register a new user and return tokens', async () => {
-      mockUsersService.create.mockResolvedValue(mockUser);
+      mockUsersService.create.mockResolvedValue(mockUserResponse);
       mockJwtService.sign.mockReturnValueOnce('access-token');
       mockJwtService.sign.mockReturnValueOnce('refresh-token');
 
@@ -85,18 +95,14 @@ describe('AuthService', () => {
 
       expect(mockUsersService.create).toHaveBeenCalledWith(registerDto);
       expect(result).toEqual({
-        user: {
-          id: mockUser.id,
-          email: mockUser.email,
-          role: mockUser.role,
-        },
+        user: mockUserResponse,
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
     });
 
     it('should call JWT sign with correct payloads', async () => {
-      mockUsersService.create.mockResolvedValue(mockUser);
+      mockUsersService.create.mockResolvedValue(mockUserResponse);
       mockJwtService.sign.mockReturnValue('token');
 
       await service.register(registerDto);
@@ -148,6 +154,8 @@ describe('AuthService', () => {
           id: user.id,
           email: user.email,
           role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
@@ -202,6 +210,8 @@ describe('AuthService', () => {
           id: mockUser.id,
           email: mockUser.email,
           role: mockUser.role,
+          createdAt: mockUser.createdAt,
+          updatedAt: mockUser.updatedAt,
         },
         accessToken: 'new-access-token',
         refreshToken: 'new-refresh-token',
@@ -217,22 +227,24 @@ describe('AuthService', () => {
       );
     });
 
-    it('should throw UnauthorizedException if token verification fails', async () => {
+    it('should propagate JWT verification errors', async () => {
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
 
       await expect(service.refreshToken(refreshToken)).rejects.toThrow(
-        UnauthorizedException,
+        'Invalid token',
       );
     });
 
-    it('should throw UnauthorizedException if user not found', async () => {
+    it('should propagate user not found errors', async () => {
       mockJwtService.verify.mockReturnValue(validPayload);
-      mockUsersService.findById.mockRejectedValue(new Error('User not found'));
+      mockUsersService.findById.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
       await expect(service.refreshToken(refreshToken)).rejects.toThrow(
-        UnauthorizedException,
+        NotFoundException,
       );
     });
   });

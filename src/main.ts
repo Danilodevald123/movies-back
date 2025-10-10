@@ -1,9 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionFilter } from './common/filters/all-exception.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Aplicar filtros y interceptores globalmente
+  app.useGlobalFilters(new AllExceptionFilter());
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   const config = new DocumentBuilder()
     .setTitle('Conexa Movies API')

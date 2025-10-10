@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserRole } from '../users/entities/user.entity';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 export interface JwtPayload {
   sub: string;
@@ -14,11 +14,7 @@ export interface JwtPayload {
 }
 
 export interface AuthResponse {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
+  user: UserResponseDto;
   accessToken: string;
   refreshToken: string;
 }
@@ -41,33 +37,24 @@ export class AuthService {
 
     if (!user || !(await user.comparePassword(loginDto.password))) {
       throw new UnauthorizedException('Invalid credentials');
-      // TODO : Maybe i will change the exception for two diferent cases
     }
-    return this.generateTokens(user);
+    return this.generateTokens(UserResponseDto.fromEntity(user));
   }
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+    const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
 
-      if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      const user = await this.usersService.findById(payload.sub);
-      return this.generateTokens(user);
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
     }
+
+    const user = await this.usersService.findById(payload.sub);
+    return this.generateTokens(UserResponseDto.fromEntity(user));
   }
 
-  private generateTokens(user: {
-    id: string;
-    email: string;
-    role: UserRole;
-  }): AuthResponse {
+  private generateTokens(user: UserResponseDto): AuthResponse {
     const accessPayload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -91,11 +78,7 @@ export class AuthService {
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
+      user,
       accessToken,
       refreshToken,
     };

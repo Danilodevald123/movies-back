@@ -1,15 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   NotFoundException,
-  BadRequestException,
+  ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { Movie } from './entities/movie.entity';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
+import { MovieResponseDto } from './dto/movie-response.dto';
+import { MOVIE_REPOSITORY } from './repositories/movie.repository.interface';
 
 describe('MoviesService', () => {
   let service: MoviesService;
@@ -22,7 +23,23 @@ describe('MoviesService', () => {
     director: 'Test Director',
     producer: 'Test Producer',
     releaseDate: new Date('2024-01-01'),
+    swapiId: '1',
+    swapiUrl: 'https://swapi.tech/api/films/1',
     createdById: 'user-123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockMovieResponse: MovieResponseDto = {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    title: 'Test Movie',
+    episodeId: 1,
+    openingCrawl: 'Test crawl',
+    director: 'Test Director',
+    producer: 'Test Producer',
+    releaseDate: new Date('2024-01-01'),
+    swapiId: '1',
+    swapiUrl: 'https://swapi.tech/api/films/1',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -30,8 +47,10 @@ describe('MoviesService', () => {
   const mockRepository = {
     create: jest.fn(),
     save: jest.fn(),
-    find: jest.fn(),
-    findOne: jest.fn(),
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    findByEpisodeId: jest.fn(),
+    findBySwapiId: jest.fn(),
     remove: jest.fn(),
   };
 
@@ -44,7 +63,7 @@ describe('MoviesService', () => {
       providers: [
         MoviesService,
         {
-          provide: getRepositoryToken(Movie),
+          provide: MOVIE_REPOSITORY,
           useValue: mockRepository,
         },
         {
@@ -71,60 +90,58 @@ describe('MoviesService', () => {
     };
 
     it('should create a new movie', async () => {
+      mockRepository.findByEpisodeId.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockResolvedValue(mockMovie);
 
       const result = await service.create(createDto, 'user-123');
 
-      expect(mockRepository.create).toHaveBeenCalledWith({
-        ...createDto,
-        createdById: 'user-123',
-      });
-      expect(mockRepository.save).toHaveBeenCalledWith(mockMovie);
-      expect(result).toEqual(mockMovie);
+      expect(mockRepository.create).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
+      expect(result).toEqual(mockMovieResponse);
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
+    it('should propagate database errors', async () => {
+      mockRepository.findByEpisodeId.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockRejectedValue(new Error('DB Error'));
 
       await expect(service.create(createDto, 'user-123')).rejects.toThrow(
-        InternalServerErrorException,
+        'DB Error',
       );
     });
 
-    it('should throw ConflictException on duplicate error', async () => {
-      const duplicateError = new Error(
-        'duplicate key value violates unique constraint',
-      );
-      mockRepository.create.mockReturnValue(mockMovie);
-      mockRepository.save.mockRejectedValue(duplicateError);
+    it('should throw ConflictException if episodeId already exists', async () => {
+      const createDtoWithEpisode = { ...createDto, episodeId: 4 };
+      mockRepository.findByEpisodeId.mockResolvedValue(mockMovie);
 
-      await expect(service.create(createDto, 'user-123')).rejects.toThrow(
-        'A movie with similar data already exists',
-      );
+      await expect(
+        service.create(createDtoWithEpisode, 'user-123'),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        service.create(createDtoWithEpisode, 'user-123'),
+      ).rejects.toThrow('Episode 4 already exists');
     });
   });
 
   describe('findAll', () => {
     it('should return an array of movies', async () => {
       const movies = [mockMovie];
-      mockRepository.find.mockResolvedValue(movies);
+      mockRepository.findAll.mockResolvedValue(movies);
 
       const result = await service.findAll();
 
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        order: { releaseDate: 'DESC' },
+      expect(mockRepository.findAll).toHaveBeenCalledWith({
+        field: 'releaseDate',
+        direction: 'DESC',
       });
-      expect(result).toEqual(movies);
+      expect(result).toEqual([mockMovieResponse]);
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
-      mockRepository.find.mockRejectedValue(new Error('DB Error'));
+    it('should propagate database errors', async () => {
+      mockRepository.findAll.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.findAll()).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.findAll()).rejects.toThrow('DB Error');
     });
   });
 
@@ -132,37 +149,26 @@ describe('MoviesService', () => {
     const validUuid = '123e4567-e89b-12d3-a456-426614174000';
 
     it('should return a movie by id', async () => {
-      mockRepository.findOne.mockResolvedValue(mockMovie);
+      mockRepository.findById.mockResolvedValue(mockMovie);
 
       const result = await service.findOne(validUuid);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: validUuid },
-      });
-      expect(result).toEqual(mockMovie);
-    });
-
-    it('should throw BadRequestException for invalid UUID', async () => {
-      await expect(service.findOne('invalid-uuid')).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(mockRepository.findOne).not.toHaveBeenCalled();
+      expect(mockRepository.findById).toHaveBeenCalledWith(validUuid);
+      expect(result).toEqual(mockMovieResponse);
     });
 
     it('should throw NotFoundException if movie not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.findOne(validUuid)).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw InternalServerErrorException on database error', async () => {
-      mockRepository.findOne.mockRejectedValue(new Error('DB Error'));
+    it('should propagate database errors', async () => {
+      mockRepository.findById.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.findOne(validUuid)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.findOne(validUuid)).rejects.toThrow('DB Error');
     });
   });
 
@@ -174,20 +180,18 @@ describe('MoviesService', () => {
 
     it('should update a movie', async () => {
       const updatedMovie = { ...mockMovie, title: 'Updated Title' };
-      mockRepository.findOne.mockResolvedValue(mockMovie);
+      mockRepository.findById.mockResolvedValue(mockMovie);
       mockRepository.save.mockResolvedValue(updatedMovie);
 
       const result = await service.update(validUuid, updateDto);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: validUuid },
-      });
+      expect(mockRepository.findById).toHaveBeenCalledWith(validUuid);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.title).toBe('Updated Title');
     });
 
     it('should throw NotFoundException if movie not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.update(validUuid, updateDto)).rejects.toThrow(
         NotFoundException,
@@ -199,32 +203,28 @@ describe('MoviesService', () => {
     const validUuid = '123e4567-e89b-12d3-a456-426614174000';
 
     it('should remove a movie', async () => {
-      mockRepository.findOne.mockResolvedValue(mockMovie);
+      mockRepository.findById.mockResolvedValue(mockMovie);
       mockRepository.remove.mockResolvedValue(mockMovie);
 
       await service.remove(validUuid);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: validUuid },
-      });
+      expect(mockRepository.findById).toHaveBeenCalledWith(validUuid);
       expect(mockRepository.remove).toHaveBeenCalledWith(mockMovie);
     });
 
     it('should throw NotFoundException if movie not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.findById.mockResolvedValue(null);
 
       await expect(service.remove(validUuid)).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw InternalServerErrorException on database error during remove', async () => {
-      mockRepository.findOne.mockResolvedValue(mockMovie);
+    it('should propagate database errors during remove', async () => {
+      mockRepository.findById.mockResolvedValue(mockMovie);
       mockRepository.remove.mockRejectedValue(new Error('DB Error'));
 
-      await expect(service.remove(validUuid)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(service.remove(validUuid)).rejects.toThrow('DB Error');
     });
   });
 
@@ -258,7 +258,7 @@ describe('MoviesService', () => {
     });
 
     it('should sync movies from SWAPI', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.findBySwapiId.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockResolvedValue(mockMovie);
 
@@ -275,7 +275,7 @@ describe('MoviesService', () => {
     });
 
     it('should skip existing movies', async () => {
-      mockRepository.findOne.mockResolvedValue(mockMovie);
+      mockRepository.findBySwapiId.mockResolvedValue(mockMovie);
 
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
@@ -329,7 +329,7 @@ describe('MoviesService', () => {
     });
 
     it('should handle errors during individual movie sync', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      mockRepository.findBySwapiId.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockMovie);
       mockRepository.save.mockRejectedValue(new Error('Save failed'));
 

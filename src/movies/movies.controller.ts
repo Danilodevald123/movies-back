@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import {
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { MoviesService } from './movies.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
@@ -42,6 +44,7 @@ export class MoviesController {
 
   @Get()
   @Public()
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
   @ApiOperation({
     summary: 'Get all movies',
     description:
@@ -204,7 +207,7 @@ export class MoviesController {
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.moviesService.findOne(id);
   }
 
@@ -256,7 +259,7 @@ export class MoviesController {
     description: 'Internal server error',
   })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMovieDto: UpdateMovieDto,
   ) {
     return this.moviesService.update(id, updateMovieDto);
@@ -296,7 +299,7 @@ export class MoviesController {
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.moviesService.remove(id);
   }
 }

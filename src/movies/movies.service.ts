@@ -3,17 +3,18 @@ import {
   NotFoundException,
   Logger,
   ConflictException,
-  BadRequestException,
   InternalServerErrorException,
-  ForbiddenException,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { validate as isValidUUID } from 'uuid';
-import { Movie } from './entities/movie.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
+import { MovieResponseDto } from './dto/movie-response.dto';
+import {
+  IMovieRepository,
+  MOVIE_REPOSITORY,
+} from './repositories/movie.repository.interface';
 
 interface SwapiFilm {
   properties: {
@@ -38,147 +39,89 @@ export class MoviesService {
   private readonly logger = new Logger(MoviesService.name);
 
   constructor(
-    @InjectRepository(Movie)
-    private readonly movieRepository: Repository<Movie>,
+    @Inject(MOVIE_REPOSITORY)
+    private readonly movieRepository: IMovieRepository,
     private readonly configService: ConfigService,
   ) {}
 
-  async create(createMovieDto: CreateMovieDto, userId: string): Promise<Movie> {
-    this.logger.log(`Creating new movie: "${createMovieDto.title}"`);
-
-    try {
-      const movie = this.movieRepository.create({
-        ...createMovieDto,
-        createdById: userId,
-      });
-
-      const savedMovie = await this.movieRepository.save(movie);
-      this.logger.log(`Movie created successfully: ${savedMovie.id}`);
-
-      return savedMovie;
-    } catch (error) {
-      this.logger.error(
-        `Failed to create movie "${createMovieDto.title}": ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
+  async create(
+    createMovieDto: CreateMovieDto,
+    userId: string,
+  ): Promise<MovieResponseDto> {
+    if (createMovieDto.episodeId) {
+      const existingByEpisode = await this.movieRepository.findByEpisodeId(
+        createMovieDto.episodeId,
       );
-
-      if (error instanceof Error && error.message.includes('duplicate')) {
-        throw new ConflictException('A movie with similar data already exists');
+      if (existingByEpisode) {
+        throw new ConflictException(
+          `Episode ${createMovieDto.episodeId} already exists`,
+        );
       }
-
-      throw new InternalServerErrorException(
-        'Failed to create movie. Please try again later.',
-      );
     }
+
+    const movie = this.movieRepository.create({
+      ...createMovieDto,
+      releaseDate: new Date(createMovieDto.releaseDate),
+      createdById: userId,
+    });
+
+    const savedMovie = await this.movieRepository.save(movie);
+    return MovieResponseDto.fromEntity(savedMovie);
   }
 
-  async findAll(): Promise<Movie[]> {
-    this.logger.log('Fetching all movies');
-
-    try {
-      const movies = await this.movieRepository.find({
-        order: { releaseDate: 'DESC' },
-      });
-
-      this.logger.log(`Retrieved ${movies.length} movies`);
-      return movies;
-    } catch (error) {
-      this.logger.error(
-        `Failed to fetch movies: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw new InternalServerErrorException(
-        'Failed to retrieve movies. Please try again later.',
-      );
-    }
+  async findAll(): Promise<MovieResponseDto[]> {
+    const movies = await this.movieRepository.findAll({
+      field: 'releaseDate',
+      direction: 'DESC',
+    });
+    return movies.map((movie) => MovieResponseDto.fromEntity(movie));
   }
 
-  async findOne(id: string): Promise<Movie> {
-    this.logger.log(`Fetching movie with ID: ${id}`);
+  async findOne(id: string): Promise<MovieResponseDto> {
+    const movie = await this.movieRepository.findById(id);
 
-    if (!isValidUUID(id)) {
-      this.logger.warn(`Invalid UUID format: ${id}`);
-      throw new BadRequestException('Invalid movie ID format');
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID ${id} not found`);
     }
 
-    try {
-      const movie = await this.movieRepository.findOne({ where: { id } });
-
-      if (!movie) {
-        this.logger.warn(`Movie not found: ${id}`);
-        throw new NotFoundException(`Movie with ID ${id} not found`);
-      }
-
-      this.logger.log(`Movie found: ${movie.title}`);
-      return movie;
-    } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error;
-      }
-
-      this.logger.error(
-        `Failed to fetch movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw new InternalServerErrorException(
-        'Failed to retrieve movie. Please try again later.',
-      );
-    }
+    return MovieResponseDto.fromEntity(movie);
   }
 
-  async update(id: string, updateMovieDto: UpdateMovieDto): Promise<Movie> {
-    this.logger.log(`Updating movie: ${id}`);
+  async update(
+    id: string,
+    updateMovieDto: UpdateMovieDto,
+  ): Promise<MovieResponseDto> {
+    const movie = await this.movieRepository.findById(id);
 
-    const movie = await this.findOne(id);
-
-    try {
-      Object.assign(movie, updateMovieDto);
-      const updatedMovie = await this.movieRepository.save(movie);
-
-      this.logger.log(`Movie updated successfully: ${updatedMovie.title}`);
-      return updatedMovie;
-    } catch (error) {
-      if (error instanceof ForbiddenException) {
-        throw error;
-      }
-
-      this.logger.error(
-        `Failed to update movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw new InternalServerErrorException(
-        'Failed to update movie. Please try again later.',
-      );
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID ${id} not found`);
     }
+
+    Object.assign(movie, updateMovieDto);
+    const updatedMovie = await this.movieRepository.save(movie);
+    return MovieResponseDto.fromEntity(updatedMovie);
   }
 
   async remove(id: string): Promise<void> {
-    this.logger.log(`Deleting movie: ${id}`);
+    const movie = await this.movieRepository.findById(id);
 
-    const movie = await this.findOne(id);
+    if (!movie) {
+      throw new NotFoundException(`Movie with ID ${id} not found`);
+    }
 
+    await this.movieRepository.remove(movie);
+  }
+
+  @Cron(CronExpression.EVERY_SECOND)
+  async scheduledSwapiSync() {
+    this.logger.log('Starting scheduled SWAPI sync (cron job)');
     try {
-      await this.movieRepository.remove(movie);
-      this.logger.log(`Movie deleted successfully: ${movie.title}`);
+      const result = await this.syncWithSwapi();
+      this.logger.log(
+        `Scheduled sync completed: ${result.synced} synced, ${result.errors} errors`,
+      );
     } catch (error) {
-      if (error instanceof ForbiddenException) {
-        throw error;
-      }
-
-      this.logger.error(
-        `Failed to delete movie ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw new InternalServerErrorException(
-        'Failed to delete movie. Please try again later.',
-      );
+      this.logger.error('Scheduled sync failed', error);
     }
   }
 
@@ -221,9 +164,9 @@ export class MoviesService {
 
       for (const film of data.result) {
         try {
-          const existingMovie = await this.movieRepository.findOne({
-            where: { swapiId: film.uid },
-          });
+          const existingMovie = await this.movieRepository.findBySwapiId(
+            film.uid,
+          );
 
           if (existingMovie) {
             this.logger.log(

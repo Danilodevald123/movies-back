@@ -100,7 +100,6 @@ describe('User Entity', () => {
 
   describe('Entity Properties', () => {
     it('should have default role as USER', () => {
-      // El default se aplica en la DB, pero verificamos el enum
       expect(UserRole.USER).toBe('user');
     });
 
