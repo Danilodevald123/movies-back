@@ -23,6 +23,12 @@ import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 import { QuestionDto, QuizResultDto } from './dto/quiz-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  THROTTLE_TTL,
+  THROTTLE_LIMIT_QUIZ_QUESTIONS,
+  THROTTLE_LIMIT_QUIZ_SUBMIT,
+  THROTTLE_LIMIT_DEFAULT,
+} from '../common/constants/app.constants';
 
 @ApiTags('quiz')
 @ApiBearerAuth('JWT-auth')
@@ -32,7 +38,9 @@ export class QuizController {
   constructor(private readonly quizService: QuizService) {}
 
   @Get('questions')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({
+    default: { limit: THROTTLE_LIMIT_QUIZ_QUESTIONS, ttl: THROTTLE_TTL },
+  })
   @ApiOperation({
     summary: 'Get 5 random Star Wars questions',
     description: 'Obtiene 5 preguntas aleatorias de Star Wars para responder',
@@ -52,7 +60,9 @@ export class QuizController {
 
   @Post('submit')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({
+    default: { limit: THROTTLE_LIMIT_QUIZ_SUBMIT, ttl: THROTTLE_TTL },
+  })
   @ApiOperation({
     summary: 'Submit quiz answers',
     description: 'Envía las respuestas del quiz y obtiene los resultados',
@@ -75,7 +85,7 @@ export class QuizController {
   }
 
   @Get('my-score')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get user score',
     description: 'Obtiene el puntaje total del usuario autenticado',

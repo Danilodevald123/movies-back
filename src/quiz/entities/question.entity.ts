@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AnswerOption } from '../dto/answer-quiz.dto';
 
 @Entity('questions')
 export class Question {
@@ -23,8 +24,8 @@ export class Question {
   @Column({ name: 'option_c' })
   optionC: string;
 
-  @Column({ name: 'correct_answer', type: 'enum', enum: ['A', 'B', 'C'] })
-  correctAnswer: 'A' | 'B' | 'C';
+  @Column({ name: 'correct_answer', type: 'enum', enum: AnswerOption })
+  correctAnswer: AnswerOption;
 
   @Column({ default: true })
   active: boolean;

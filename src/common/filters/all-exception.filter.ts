@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -17,21 +18,62 @@ export class AllExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    if (
+      exception instanceof Error &&
+      exception.name === 'QueryFailedError' &&
+      exception.message.includes('invalid input syntax for type uuid')
+    ) {
+      const badRequestException = new BadRequestException(
+        'Uno o más IDs proporcionados no son válidos',
+      );
+      return this.handleHttpException(badRequestException, request, response);
+    }
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    if (exception instanceof HttpException) {
+      return this.handleHttpException(exception, request, response);
+    }
 
-    const errorMessage =
-      typeof message === 'string'
-        ? message
-        : String((message as Record<string, unknown>).message) ||
-          'Internal server error';
+    // Error no controlado
+    const status = HttpStatus.INTERNAL_SERVER_ERROR;
+    const errorResponse = {
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message: 'Internal server error',
+    };
+
+    this.logger.error(
+      `${request.method} ${request.url} - ${status}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
+
+    response.status(status).json(errorResponse);
+  }
+
+  private handleHttpException(
+    exception: HttpException,
+    request: Request,
+    response: Response,
+  ) {
+    const status = exception.getStatus();
+    const exceptionResponse = exception.getResponse();
+
+    let errorMessage: string;
+
+    if (typeof exceptionResponse === 'string') {
+      errorMessage = exceptionResponse;
+    } else {
+      const responseObj = exceptionResponse as Record<string, unknown>;
+
+      // Manejar errores de validación con múltiples mensajes
+      if (Array.isArray(responseObj.message)) {
+        errorMessage = responseObj.message.join(', ');
+      } else if (typeof responseObj.message === 'string') {
+        errorMessage = responseObj.message;
+      } else {
+        errorMessage = 'Bad request';
+      }
+    }
 
     const errorResponse = {
       statusCode: status,
@@ -43,11 +85,11 @@ export class AllExceptionFilter implements ExceptionFilter {
     if (status >= 500) {
       this.logger.error(
         `${request.method} ${request.url} - ${status}`,
-        exception instanceof Error ? exception.stack : undefined,
+        exception.stack,
       );
     } else {
       this.logger.warn(
-        `${request.method} ${request.url} - ${status}: ${String(errorMessage)}`,
+        `${request.method} ${request.url} - ${status}: ${errorMessage}`,
       );
     }
 

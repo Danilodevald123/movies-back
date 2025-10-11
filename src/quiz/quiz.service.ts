@@ -14,6 +14,7 @@ import {
 } from './repositories/user-answer.repository.interface';
 import { QuestionDto, QuizResultDto } from './dto/quiz-response.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
+import { QUIZ_QUESTIONS_COUNT } from '../common/constants/app.constants';
 
 @Injectable()
 export class QuizService {
@@ -25,9 +26,10 @@ export class QuizService {
   ) {}
 
   async getQuestions(): Promise<QuestionDto[]> {
-    const questions = await this.questionRepository.findRandomActive(5);
+    const questions =
+      await this.questionRepository.findRandomActive(QUIZ_QUESTIONS_COUNT);
 
-    if (questions.length < 5) {
+    if (questions.length < QUIZ_QUESTIONS_COUNT) {
       throw new NotFoundException(
         'No hay suficientes preguntas disponibles en el sistema',
       );
@@ -48,8 +50,18 @@ export class QuizService {
     userId: string,
     answerQuizDto: AnswerQuizDto,
   ): Promise<QuizResultDto> {
-    if (answerQuizDto.answers.length !== 5) {
-      throw new BadRequestException('Debes responder las 5 preguntas');
+    if (answerQuizDto.answers.length !== QUIZ_QUESTIONS_COUNT) {
+      throw new BadRequestException(
+        `Debes responder las ${QUIZ_QUESTIONS_COUNT} preguntas`,
+      );
+    }
+
+    const questionIds = answerQuizDto.answers.map((a) => a.questionId);
+    const uniqueIds = new Set(questionIds);
+    if (uniqueIds.size !== questionIds.length) {
+      throw new BadRequestException(
+        'No puedes responder la misma pregunta más de una vez',
+      );
     }
 
     const results = [];
@@ -96,12 +108,10 @@ export class QuizService {
       });
     }
 
-    const score = (correctCount / 5) * 100;
-
     return {
-      totalQuestions: 5,
+      totalQuestions: QUIZ_QUESTIONS_COUNT,
       correctAnswers: correctCount,
-      score,
+      score: correctCount,
       answers: results,
     };
   }

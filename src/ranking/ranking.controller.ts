@@ -1,25 +1,31 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
+  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { RankingService } from './ranking.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtUser } from '../auth/interfaces/jwt-user.interface';
-import { RankingItemDto, RankingResponseDto } from './dto/ranking-response.dto';
+import { RankingResponseDto, RankingItemDto } from './dto/ranking-response.dto';
+import {
+  THROTTLE_TTL,
+  THROTTLE_LIMIT_DEFAULT,
+} from '../common/constants/app.constants';
 
 @ApiTags('ranking')
 @ApiBearerAuth('JWT-auth')
 @Controller('ranking')
+@UseGuards(JwtAuthGuard)
 export class RankingController {
   constructor(private readonly rankingService: RankingService) {}
 
   @Get()
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get user rankings',
     description:
@@ -36,7 +42,7 @@ export class RankingController {
   }
 
   @Get('me')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get my ranking position',
     description: 'Obtiene la posición en el ranking del usuario autenticado',

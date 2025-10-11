@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QuizController } from './quiz.controller';
 import { QuizService } from './quiz.service';
-import { AnswerQuizDto } from './dto/answer-quiz.dto';
+import { AnswerQuizDto, AnswerOption } from './dto/answer-quiz.dto';
 import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { UserRole } from '../users/entities/user.entity';
 
@@ -198,11 +198,11 @@ describe('QuizController', () => {
   describe('submitAnswers', () => {
     const answerDto: AnswerQuizDto = {
       answers: [
-        { questionId: 'q1', answer: 'B' },
-        { questionId: 'q2', answer: 'A' },
-        { questionId: 'q3', answer: 'B' },
-        { questionId: 'q4', answer: 'C' },
-        { questionId: 'q5', answer: 'A' },
+        { questionId: 'q1', answer: AnswerOption.B },
+        { questionId: 'q2', answer: AnswerOption.A },
+        { questionId: 'q3', answer: AnswerOption.B },
+        { questionId: 'q4', answer: AnswerOption.C },
+        { questionId: 'q5', answer: AnswerOption.A },
       ],
     };
 

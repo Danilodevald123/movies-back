@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserAnswer } from '../entities/user-answer.entity';
 import { IUserAnswerRepository } from './user-answer.repository.interface';
+import { AnswerOption } from '../dto/answer-quiz.dto';
 
 @Injectable()
 export class UserAnswerRepository implements IUserAnswerRepository {
@@ -14,7 +15,7 @@ export class UserAnswerRepository implements IUserAnswerRepository {
   create(data: {
     userId: string;
     questionId: string;
-    selectedAnswer: 'A' | 'B' | 'C';
+    selectedAnswer: AnswerOption;
     isCorrect: boolean;
   }): UserAnswer {
     return this.repository.create(data);
