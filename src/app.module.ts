@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { validate } from './config/env.validation';
 import { getDatabaseConfig } from './config/database.config';
@@ -44,10 +43,6 @@ import { MoviesModule } from './movies/movies.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_PIPE,
-      useClass: ValidationPipe,
     },
   ],
 })
