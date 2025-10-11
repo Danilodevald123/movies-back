@@ -12,14 +12,14 @@ export class RankingService {
     private readonly rankingRepository: IRankingRepository,
   ) {}
 
-  async getRanking(): Promise<RankingResponseDto> {
+  private async buildRankings(): Promise<RankingItemDto[]> {
     const results = await this.rankingRepository.getUserScores();
     const userIds = results.map((r) => r.userId);
     const users = await this.rankingRepository.getUsersByIds(userIds);
 
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    const rankings: RankingItemDto[] = results.map((result, index: number) => {
+    return results.map((result, index: number) => {
       const user = userMap.get(result.userId);
       return {
         userId: result.userId,
@@ -28,6 +28,10 @@ export class RankingService {
         position: index + 1,
       };
     });
+  }
+
+  async getRanking(): Promise<RankingResponseDto> {
+    const rankings = await this.buildRankings();
 
     return {
       rankings,
@@ -36,6 +40,8 @@ export class RankingService {
   }
 
   async getUserRanking(userId: string): Promise<RankingItemDto | null> {
-    return this.rankingRepository.getUserRanking(userId);
+    const rankings = await this.buildRankings();
+    const userRanking = rankings.find((r) => r.userId === userId);
+    return userRanking || null;
   }
 }

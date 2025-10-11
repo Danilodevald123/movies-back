@@ -1,5 +1,3 @@
-import { RankingItemDto } from '../dto/ranking-response.dto';
-
 export const RANKING_REPOSITORY = Symbol('RANKING_REPOSITORY');
 
 export interface IRankingRepository {
@@ -7,5 +5,4 @@ export interface IRankingRepository {
   getUsersByIds(
     userIds: string[],
   ): Promise<Array<{ id: string; email: string }>>;
-  getUserRanking(userId: string): Promise<RankingItemDto | null>;
 }
