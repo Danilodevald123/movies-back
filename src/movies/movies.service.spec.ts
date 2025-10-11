@@ -15,6 +15,8 @@ import { MOVIE_REPOSITORY } from './repositories/movie.repository.interface';
 describe('MoviesService', () => {
   let service: MoviesService;
 
+  const mockDate = new Date('2025-10-10T19:03:06.009Z');
+
   const mockMovie: Partial<Movie> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     title: 'Test Movie',
@@ -26,8 +28,8 @@ describe('MoviesService', () => {
     swapiId: '1',
     swapiUrl: 'https://swapi.tech/api/films/1',
     createdById: 'user-123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: mockDate,
+    updatedAt: mockDate,
   };
 
   const mockMovieResponse: MovieResponseDto = {
@@ -40,8 +42,8 @@ describe('MoviesService', () => {
     releaseDate: new Date('2024-01-01'),
     swapiId: '1',
     swapiUrl: 'https://swapi.tech/api/films/1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: mockDate,
+    updatedAt: mockDate,
   };
 
   const mockRepository = {

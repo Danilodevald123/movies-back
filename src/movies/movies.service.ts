@@ -112,7 +112,7 @@ export class MoviesService {
     await this.movieRepository.remove(movie);
   }
 
-  @Cron(CronExpression.EVERY_SECOND)
+  @Cron(CronExpression.EVERY_12_HOURS)
   async scheduledSwapiSync() {
     this.logger.log('Starting scheduled SWAPI sync (cron job)');
     try {
