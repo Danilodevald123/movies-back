@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { QuizService } from './quiz.service';
 import { Question } from './entities/question.entity';
 import { UserAnswer } from './entities/user-answer.entity';
@@ -65,12 +64,9 @@ describe('QuizService', () => {
   };
 
   const mockUserAnswerRepository = {
+    create: jest.fn(),
     save: jest.fn(),
     countCorrectAnswersByUser: jest.fn(),
-  };
-
-  const mockUserAnswerRepo = {
-    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -84,10 +80,6 @@ describe('QuizService', () => {
         {
           provide: USER_ANSWER_REPOSITORY,
           useValue: mockUserAnswerRepository,
-        },
-        {
-          provide: getRepositoryToken(UserAnswer),
-          useValue: mockUserAnswerRepo,
         },
       ],
     }).compile();
@@ -171,7 +163,7 @@ describe('QuizService', () => {
         return Promise.resolve(mockQuestions.find((q) => q.id === id));
       });
 
-      mockUserAnswerRepo.create.mockImplementation(
+      mockUserAnswerRepository.create.mockImplementation(
         (data: Partial<UserAnswer>) => data,
       );
       mockUserAnswerRepository.save.mockResolvedValue({});
@@ -290,10 +282,10 @@ describe('QuizService', () => {
     it('should save all user answers to repository', async () => {
       await service.submitAnswers(userId, validAnswerDto);
 
-      expect(mockUserAnswerRepo.create).toHaveBeenCalledTimes(5);
+      expect(mockUserAnswerRepository.create).toHaveBeenCalledTimes(5);
       expect(mockUserAnswerRepository.save).toHaveBeenCalledTimes(5);
 
-      expect(mockUserAnswerRepo.create).toHaveBeenCalledWith({
+      expect(mockUserAnswerRepository.create).toHaveBeenCalledWith({
         userId,
         questionId: 'q1',
         selectedAnswer: 'B',

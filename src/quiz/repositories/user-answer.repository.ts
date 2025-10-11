@@ -11,6 +11,15 @@ export class UserAnswerRepository implements IUserAnswerRepository {
     private readonly repository: Repository<UserAnswer>,
   ) {}
 
+  create(data: {
+    userId: string;
+    questionId: string;
+    selectedAnswer: 'A' | 'B' | 'C';
+    isCorrect: boolean;
+  }): UserAnswer {
+    return this.repository.create(data);
+  }
+
   async save(userAnswer: UserAnswer): Promise<UserAnswer> {
     return this.repository.save(userAnswer);
   }

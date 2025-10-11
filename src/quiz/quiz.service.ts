@@ -4,8 +4,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
   IQuestionRepository,
   QUESTION_REPOSITORY,
@@ -14,7 +12,6 @@ import {
   IUserAnswerRepository,
   USER_ANSWER_REPOSITORY,
 } from './repositories/user-answer.repository.interface';
-import { UserAnswer } from './entities/user-answer.entity';
 import { QuestionDto, QuizResultDto } from './dto/quiz-response.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
 
@@ -25,8 +22,6 @@ export class QuizService {
     private readonly questionRepository: IQuestionRepository,
     @Inject(USER_ANSWER_REPOSITORY)
     private readonly userAnswerRepository: IUserAnswerRepository,
-    @InjectRepository(UserAnswer)
-    private readonly userAnswerRepo: Repository<UserAnswer>,
   ) {}
 
   async getQuestions(): Promise<QuestionDto[]> {
@@ -74,7 +69,7 @@ export class QuizService {
       const isCorrect = answer.answer === question.correctAnswer;
       if (isCorrect) correctCount++;
 
-      const userAnswer = this.userAnswerRepo.create({
+      const userAnswer = this.userAnswerRepository.create({
         userId,
         questionId: answer.questionId,
         selectedAnswer: answer.answer,

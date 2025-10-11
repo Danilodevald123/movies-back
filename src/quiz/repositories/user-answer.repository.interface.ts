@@ -3,6 +3,12 @@ import { UserAnswer } from '../entities/user-answer.entity';
 export const USER_ANSWER_REPOSITORY = Symbol('USER_ANSWER_REPOSITORY');
 
 export interface IUserAnswerRepository {
+  create(data: {
+    userId: string;
+    questionId: string;
+    selectedAnswer: 'A' | 'B' | 'C';
+    isCorrect: boolean;
+  }): UserAnswer;
   save(userAnswer: UserAnswer): Promise<UserAnswer>;
   findByUserId(userId: string): Promise<UserAnswer[]>;
   findByUserAndQuestion(
