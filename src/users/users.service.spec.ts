@@ -10,6 +10,7 @@ describe('UsersService', () => {
 
   const mockUser: Partial<User> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
+    username: 'test_user',
     email: 'test@example.com',
     password: 'hashedPassword',
     role: UserRole.USER,
@@ -22,6 +23,7 @@ describe('UsersService', () => {
     save: jest.fn(),
     findById: jest.fn(),
     findByEmail: jest.fn(),
+    findByUsername: jest.fn(),
     findAll: jest.fn(),
   };
 
@@ -47,12 +49,14 @@ describe('UsersService', () => {
 
   describe('create', () => {
     const createUserDto: CreateUserDto = {
+      username: 'new_user',
       email: 'new@example.com',
       password: 'password123',
     };
 
     it('should create a new user', async () => {
       mockRepository.findByEmail.mockResolvedValue(null);
+      mockRepository.findByUsername.mockResolvedValue(null);
       mockRepository.create.mockReturnValue(mockUser);
       mockRepository.save.mockResolvedValue(mockUser);
 
@@ -61,10 +65,14 @@ describe('UsersService', () => {
       expect(mockRepository.findByEmail).toHaveBeenCalledWith(
         createUserDto.email,
       );
+      expect(mockRepository.findByUsername).toHaveBeenCalledWith(
+        createUserDto.username,
+      );
       expect(mockRepository.create).toHaveBeenCalledWith(createUserDto);
       expect(mockRepository.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({
         id: mockUser.id,
+        username: mockUser.username,
         email: mockUser.email,
         role: mockUser.role,
         createdAt: mockUser.createdAt,
@@ -75,6 +83,17 @@ describe('UsersService', () => {
 
     it('should throw ConflictException if email already exists', async () => {
       mockRepository.findByEmail.mockResolvedValue(mockUser);
+
+      await expect(service.create(createUserDto)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(mockRepository.create).not.toHaveBeenCalled();
+      expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if username already exists', async () => {
+      mockRepository.findByEmail.mockResolvedValue(null);
+      mockRepository.findByUsername.mockResolvedValue(mockUser);
 
       await expect(service.create(createUserDto)).rejects.toThrow(
         ConflictException,
@@ -136,6 +155,7 @@ describe('UsersService', () => {
       expect(result[0]).not.toHaveProperty('password');
       expect(result[0]).toEqual({
         id: mockUser.id,
+        username: mockUser.username,
         email: mockUser.email,
         role: mockUser.role,
         createdAt: mockUser.createdAt,
@@ -163,6 +183,7 @@ describe('UsersService', () => {
       expect(mockRepository.findById).toHaveBeenCalledWith(userId);
       expect(result).toEqual({
         id: mockUser.id,
+        username: mockUser.username,
         email: mockUser.email,
         role: mockUser.role,
         createdAt: mockUser.createdAt,

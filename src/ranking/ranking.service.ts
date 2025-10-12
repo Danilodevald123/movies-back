@@ -22,8 +22,7 @@ export class RankingService {
     return results.map((result, index: number) => {
       const user = userMap.get(result.userId);
       return {
-        userId: result.userId,
-        email: user?.email || 'Unknown',
+        username: user?.username || 'Anonymous',
         score: parseInt(result.score, 10),
         position: index + 1,
       };
@@ -41,7 +40,13 @@ export class RankingService {
 
   async getUserRanking(userId: string): Promise<RankingItemDto | null> {
     const rankings = await this.buildRankings();
-    const userRanking = rankings.find((r) => r.userId === userId);
-    return userRanking || null;
+    const results = await this.rankingRepository.getUserScores();
+    const userIndex = results.findIndex((r) => r.userId === userId);
+
+    if (userIndex === -1) {
+      return null;
+    }
+
+    return rankings[userIndex];
   }
 }

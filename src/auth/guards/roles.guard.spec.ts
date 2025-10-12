@@ -29,6 +29,7 @@ describe('RolesGuard', () => {
     it('should return true if no roles are required', () => {
       const mockContext = createMockExecutionContext({
         id: '1',
+        username: 'test_user',
         email: 'test@example.com',
         role: UserRole.USER,
       });

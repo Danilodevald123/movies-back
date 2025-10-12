@@ -25,6 +25,7 @@ describe('MoviesController', () => {
 
   const mockUser = {
     id: 'user-123',
+    username: 'admin_user',
     email: 'test@example.com',
     role: UserRole.ADMIN,
   };

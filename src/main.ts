@@ -26,7 +26,7 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints (register, login, refresh token)')
-    .addTag('users', 'User management endpoints (CRUD operations)')
+    .addTag('users', 'User management endpoints')
     .addTag('movies', 'Movie management and SWAPI sync endpoints')
     .addBearerAuth(
       {

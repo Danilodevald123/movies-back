@@ -27,6 +27,7 @@ describe('UsersController', () => {
 
   const mockUser = {
     id: '123e4567-e89b-12d3-a456-426614174000',
+    username: 'test_user',
     email: 'user1@example.com',
     role: UserRole.USER,
   };
@@ -65,6 +66,7 @@ describe('UsersController', () => {
     it('should return current user profile', async () => {
       const jwtUser = {
         id: mockUser.id,
+        username: mockUser.username,
         email: mockUser.email,
         role: mockUser.role,
       };

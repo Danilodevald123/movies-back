@@ -12,6 +12,7 @@ import { UserRole } from '../../users/entities/user.entity';
 describe('CurrentUser Decorator', () => {
   const mockUser: JwtUser = {
     id: 'user-uuid',
+    username: 'test_user',
     email: 'test@example.com',
     role: UserRole.USER,
   };

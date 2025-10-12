@@ -8,6 +8,7 @@ import { UserResponseDto } from '../users/dto/user-response.dto';
 
 export interface JwtPayload {
   sub: string;
+  username: string | null;
   email: string;
   role: string;
   type: 'access' | 'refresh';
@@ -57,6 +58,7 @@ export class AuthService {
   private generateTokens(user: UserResponseDto): AuthResponse {
     const accessPayload: JwtPayload = {
       sub: user.id,
+      username: user.username,
       email: user.email,
       role: user.role,
       type: 'access',
@@ -64,6 +66,7 @@ export class AuthService {
 
     const refreshPayload: JwtPayload = {
       sub: user.id,
+      username: user.username,
       email: user.email,
       role: user.role,
       type: 'refresh',

@@ -4,5 +4,5 @@ export interface IRankingRepository {
   getUserScores(): Promise<Array<{ userId: string; score: string }>>;
   getUsersByIds(
     userIds: string[],
-  ): Promise<Array<{ id: string; email: string }>>;
+  ): Promise<Array<{ id: string; username: string | null }>>;
 }

@@ -14,6 +14,7 @@ describe('JwtStrategy', () => {
 
   const mockUser = {
     id: 'user-uuid',
+    username: 'test_user',
     email: 'test@example.com',
     role: UserRole.USER,
     password: 'hashed',
@@ -53,6 +54,7 @@ describe('JwtStrategy', () => {
   describe('validate', () => {
     const validPayload: JwtPayload = {
       sub: 'user-uuid',
+      username: 'test_user',
       email: 'test@example.com',
       role: UserRole.USER,
       type: 'access',
@@ -65,6 +67,7 @@ describe('JwtStrategy', () => {
 
       expect(result).toEqual({
         id: mockUser.id,
+        username: mockUser.username,
         email: mockUser.email,
         role: mockUser.role,
       });
@@ -100,6 +103,7 @@ describe('JwtStrategy', () => {
 
       expect(result).toEqual({
         id: adminUser.id,
+        username: adminUser.username,
         email: adminUser.email,
         role: UserRole.ADMIN,
       });

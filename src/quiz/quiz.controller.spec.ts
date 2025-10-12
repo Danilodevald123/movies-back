@@ -132,6 +132,7 @@ describe('QuizController', () => {
 
   const mockUser: JwtUser = {
     id: 'user-123',
+    username: 'test_user',
     email: 'test@example.com',
     role: UserRole.USER,
   };

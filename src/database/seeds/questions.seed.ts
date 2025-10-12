@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { Question } from '../../quiz/entities/question.entity';
+import { AnswerOption } from '../../quiz/dto/answer-quiz.dto';
 
 export const questionsSeed = [
   {
@@ -7,63 +8,63 @@ export const questionsSeed = [
     optionA: 'Obi-Wan Kenobi',
     optionB: 'Darth Vader',
     optionC: 'Palpatine',
-    correctAnswer: 'B' as const,
+    correctAnswer: AnswerOption.B,
   },
   {
     question: '¿Qué especie es Chewbacca?',
     optionA: 'Wookiee',
     optionB: 'Ewok',
     optionC: 'Hutt',
-    correctAnswer: 'A' as const,
+    correctAnswer: AnswerOption.A,
   },
   {
     question: '¿Cómo se llama la nave de Han Solo?',
     optionA: 'X-Wing',
     optionB: 'Halcón Milenario',
     optionC: 'Estrella de la Muerte',
-    correctAnswer: 'B' as const,
+    correctAnswer: AnswerOption.B,
   },
   {
     question: '¿Qué color es el sable de luz de Mace Windu?',
     optionA: 'Verde',
     optionB: 'Rojo',
     optionC: 'Púrpura',
-    correctAnswer: 'C' as const,
+    correctAnswer: AnswerOption.C,
   },
   {
     question: '¿En qué planeta vive Yoda en el exilio?',
     optionA: 'Tatooine',
     optionB: 'Dagobah',
     optionC: 'Endor',
-    correctAnswer: 'B' as const,
+    correctAnswer: AnswerOption.B,
   },
   {
     question: '¿Quién mató a Jabba the Hutt?',
     optionA: 'Luke Skywalker',
     optionB: 'Han Solo',
     optionC: 'Princesa Leia',
-    correctAnswer: 'C' as const,
+    correctAnswer: AnswerOption.C,
   },
   {
     question: '¿Cómo se llama el maestro de Obi-Wan Kenobi?',
     optionA: 'Qui-Gon Jinn',
     optionB: 'Mace Windu',
     optionC: 'Yoda',
-    correctAnswer: 'A' as const,
+    correctAnswer: AnswerOption.A,
   },
   {
     question: '¿Qué droide acompaña a R2-D2 en toda la saga?',
     optionA: 'BB-8',
     optionB: 'C-3PO',
     optionC: 'K-2SO',
-    correctAnswer: 'B' as const,
+    correctAnswer: AnswerOption.B,
   },
   {
     question: '¿Quién es el Canciller Supremo que se convierte en Emperador?',
     optionA: 'Darth Maul',
     optionB: 'Count Dooku',
     optionC: 'Palpatine',
-    correctAnswer: 'C' as const,
+    correctAnswer: AnswerOption.C,
   },
   {
     question:
@@ -71,7 +72,7 @@ export const questionsSeed = [
     optionA: 'Anakin Skywalker',
     optionB: 'Ben Solo',
     optionC: 'Luke Skywalker',
-    correctAnswer: 'A' as const,
+    correctAnswer: AnswerOption.A,
   },
 ];
 

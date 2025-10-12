@@ -2,7 +2,6 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { AnswerQuizDto, AnswerItem } from './answer-quiz.dto';
 
-// UUID v4 válidos (3er grupo empieza con 4, 4to grupo empieza con 8-b)
 const VALID_UUID = '123e4567-e89b-42d3-a456-426614174000';
 const VALID_UUID_2 = '987fcdeb-51a2-43f7-9b6d-123456789abc';
 const VALID_UUID_3 = 'a1b2c3d4-e5f6-4789-b012-3456789abcde';

@@ -29,17 +29,17 @@ export class RankingRepository implements IRankingRepository {
 
   async getUsersByIds(
     userIds: string[],
-  ): Promise<Array<{ id: string; email: string }>> {
+  ): Promise<Array<{ id: string; username: string | null }>> {
     if (userIds.length === 0) {
       return [];
     }
 
     const users = await this.userRepository
       .createQueryBuilder('user')
-      .select(['user.id', 'user.email'])
+      .select(['user.id', 'user.username'])
       .where('user.id IN (:...userIds)', { userIds })
       .getMany();
 
-    return users.map((u) => ({ id: u.id, email: u.email }));
+    return users.map((u) => ({ id: u.id, username: u.username }));
   }
 }
