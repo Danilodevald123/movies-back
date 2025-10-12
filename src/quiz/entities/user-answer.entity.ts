@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Question } from './question.entity';
+import { AnswerOption } from '../dto/answer-quiz.dto';
 
 @Entity('user_answers')
 export class UserAnswer {
@@ -28,8 +29,8 @@ export class UserAnswer {
   @JoinColumn({ name: 'question_id' })
   question: Question;
 
-  @Column({ name: 'selected_answer', type: 'enum', enum: ['A', 'B', 'C'] })
-  selectedAnswer: 'A' | 'B' | 'C';
+  @Column({ name: 'selected_answer', type: 'enum', enum: AnswerOption })
+  selectedAnswer: AnswerOption;
 
   @Column({ name: 'is_correct' })
   isCorrect: boolean;

@@ -1,0 +1,8 @@
+export const THROTTLE_TTL = 60000;
+export const THROTTLE_LIMIT_DEFAULT = 20;
+export const THROTTLE_LIMIT_QUIZ_QUESTIONS = 10;
+export const THROTTLE_LIMIT_QUIZ_SUBMIT = 5;
+
+export const BCRYPT_SALT_ROUNDS = 10;
+
+export const QUIZ_QUESTIONS_COUNT = 5;

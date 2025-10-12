@@ -1,22 +1,30 @@
-import { IsArray, IsString, IsEnum, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
+export enum AnswerOption {
+  A = 'A',
+  B = 'B',
+  C = 'C',
+}
 
 export class AnswerItem {
   @ApiProperty({
     description: 'ID de la pregunta',
     example: '961303df-aa80-496f-a968-3d69986248fc',
   })
-  @IsString()
+  @IsUUID('4', { message: 'questionId debe ser un UUID válido' })
   questionId: string;
 
   @ApiProperty({
     description: 'Respuesta seleccionada (A, B o C)',
-    enum: ['A', 'B', 'C'],
+    enum: AnswerOption,
     example: 'B',
   })
-  @IsEnum(['A', 'B', 'C'])
-  answer: 'A' | 'B' | 'C';
+  @IsEnum(AnswerOption, {
+    message: 'answer debe ser uno de los siguientes valores: A, B, C',
+  })
+  answer: AnswerOption;
 }
 
 export class AnswerQuizDto {

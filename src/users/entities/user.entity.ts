@@ -8,6 +8,7 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { BCRYPT_SALT_ROUNDS } from '../../common/constants/app.constants';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -18,6 +19,9 @@ export enum UserRole {
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  username: string | null;
 
   @Column({ unique: true })
   email: string;
@@ -42,7 +46,7 @@ export class User {
   @BeforeUpdate()
   async hashPassword() {
     if (this.password) {
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
       this.password = await bcrypt.hash(this.password, salt);
     }
   }

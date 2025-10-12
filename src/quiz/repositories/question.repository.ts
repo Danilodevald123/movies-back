@@ -11,6 +11,10 @@ export class QuestionRepository implements IQuestionRepository {
     private readonly repository: Repository<Question>,
   ) {}
 
+  create(data: Partial<Question>): Question {
+    return this.repository.create(data);
+  }
+
   async findAll(): Promise<Question[]> {
     return this.repository.find({ where: { active: true } });
   }

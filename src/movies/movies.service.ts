@@ -137,16 +137,15 @@ export class MoviesService {
 
     let synced = 0;
     let errors = 0;
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | undefined;
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${swapiUrl}/films`, {
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(
@@ -232,6 +231,10 @@ export class MoviesService {
       throw new InternalServerErrorException(
         'Failed to sync with SWAPI. Please try again later.',
       );
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 }

@@ -13,6 +13,7 @@ describe('AuthService', () => {
 
   const mockUser: Partial<User> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
+    username: 'test_user',
     email: 'test@example.com',
     password: 'hashedPassword',
     role: UserRole.USER,
@@ -23,6 +24,7 @@ describe('AuthService', () => {
 
   const mockUserResponse = {
     id: '123e4567-e89b-12d3-a456-426614174000',
+    username: 'test_user',
     email: 'test@example.com',
     role: UserRole.USER,
     createdAt: new Date(),
@@ -82,6 +84,7 @@ describe('AuthService', () => {
 
   describe('register', () => {
     const registerDto: RegisterDto = {
+      username: 'new_user',
       email: 'new@example.com',
       password: 'password123',
     };
@@ -110,6 +113,7 @@ describe('AuthService', () => {
       expect(mockJwtService.sign).toHaveBeenCalledWith(
         {
           sub: mockUser.id,
+          username: mockUser.username,
           email: mockUser.email,
           role: mockUser.role,
           type: 'access',
@@ -120,6 +124,7 @@ describe('AuthService', () => {
       expect(mockJwtService.sign).toHaveBeenCalledWith(
         {
           sub: mockUser.id,
+          username: mockUser.username,
           email: mockUser.email,
           role: mockUser.role,
           type: 'refresh',
@@ -152,6 +157,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: {
           id: user.id,
+          username: user.username,
           email: user.email,
           role: user.role,
           createdAt: user.createdAt,
@@ -208,6 +214,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         user: {
           id: mockUser.id,
+          username: mockUser.username,
           email: mockUser.email,
           role: mockUser.role,
           createdAt: mockUser.createdAt,

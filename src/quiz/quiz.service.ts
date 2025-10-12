@@ -4,8 +4,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
   IQuestionRepository,
   QUESTION_REPOSITORY,
@@ -14,9 +12,9 @@ import {
   IUserAnswerRepository,
   USER_ANSWER_REPOSITORY,
 } from './repositories/user-answer.repository.interface';
-import { UserAnswer } from './entities/user-answer.entity';
 import { QuestionDto, QuizResultDto } from './dto/quiz-response.dto';
 import { AnswerQuizDto } from './dto/answer-quiz.dto';
+import { QUIZ_QUESTIONS_COUNT } from '../common/constants/app.constants';
 
 @Injectable()
 export class QuizService {
@@ -25,14 +23,13 @@ export class QuizService {
     private readonly questionRepository: IQuestionRepository,
     @Inject(USER_ANSWER_REPOSITORY)
     private readonly userAnswerRepository: IUserAnswerRepository,
-    @InjectRepository(UserAnswer)
-    private readonly userAnswerRepo: Repository<UserAnswer>,
   ) {}
 
   async getQuestions(): Promise<QuestionDto[]> {
-    const questions = await this.questionRepository.findRandomActive(5);
+    const questions =
+      await this.questionRepository.findRandomActive(QUIZ_QUESTIONS_COUNT);
 
-    if (questions.length < 5) {
+    if (questions.length < QUIZ_QUESTIONS_COUNT) {
       throw new NotFoundException(
         'No hay suficientes preguntas disponibles en el sistema',
       );
@@ -53,8 +50,18 @@ export class QuizService {
     userId: string,
     answerQuizDto: AnswerQuizDto,
   ): Promise<QuizResultDto> {
-    if (answerQuizDto.answers.length !== 5) {
-      throw new BadRequestException('Debes responder las 5 preguntas');
+    if (answerQuizDto.answers.length !== QUIZ_QUESTIONS_COUNT) {
+      throw new BadRequestException(
+        `Debes responder las ${QUIZ_QUESTIONS_COUNT} preguntas`,
+      );
+    }
+
+    const questionIds = answerQuizDto.answers.map((a) => a.questionId);
+    const uniqueIds = new Set(questionIds);
+    if (uniqueIds.size !== questionIds.length) {
+      throw new BadRequestException(
+        'No puedes responder la misma pregunta más de una vez',
+      );
     }
 
     const results = [];
@@ -74,7 +81,7 @@ export class QuizService {
       const isCorrect = answer.answer === question.correctAnswer;
       if (isCorrect) correctCount++;
 
-      const userAnswer = this.userAnswerRepo.create({
+      const userAnswer = this.userAnswerRepository.create({
         userId,
         questionId: answer.questionId,
         selectedAnswer: answer.answer,
@@ -101,12 +108,10 @@ export class QuizService {
       });
     }
 
-    const score = (correctCount / 5) * 100;
-
     return {
-      totalQuestions: 5,
+      totalQuestions: QUIZ_QUESTIONS_COUNT,
       correctAnswers: correctCount,
-      score,
+      score: correctCount,
       answers: results,
     };
   }

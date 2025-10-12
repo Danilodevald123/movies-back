@@ -9,6 +9,13 @@ export class UserResponseDto {
   id: string;
 
   @ApiProperty({
+    description: 'Username',
+    example: 'john_doe',
+    nullable: true,
+  })
+  username: string | null;
+
+  @ApiProperty({
     description: 'User email address',
     example: 'user@example.com',
   })
@@ -36,6 +43,7 @@ export class UserResponseDto {
   static fromEntity(user: User): UserResponseDto {
     return {
       id: user.id,
+      username: user.username,
       email: user.email,
       role: user.role,
       createdAt: user.createdAt,

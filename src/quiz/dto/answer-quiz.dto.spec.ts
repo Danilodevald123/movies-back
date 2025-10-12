@@ -2,11 +2,17 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { AnswerQuizDto, AnswerItem } from './answer-quiz.dto';
 
+const VALID_UUID = '123e4567-e89b-42d3-a456-426614174000';
+const VALID_UUID_2 = '987fcdeb-51a2-43f7-9b6d-123456789abc';
+const VALID_UUID_3 = 'a1b2c3d4-e5f6-4789-b012-3456789abcde';
+const VALID_UUID_4 = 'f0e1d2c3-b4a5-4968-9777-888999aaabbb';
+const VALID_UUID_5 = '11223344-5566-4778-8899-aabbccddeeff';
+
 describe('AnswerQuizDto', () => {
   describe('AnswerItem', () => {
     it('should validate with correct data', async () => {
       const item = plainToInstance(AnswerItem, {
-        questionId: 'q1',
+        questionId: VALID_UUID,
         answer: 'A',
       });
 
@@ -19,7 +25,7 @@ describe('AnswerQuizDto', () => {
 
       for (const letter of validLetters) {
         const item = plainToInstance(AnswerItem, {
-          questionId: 'q1',
+          questionId: VALID_UUID,
           answer: letter,
         });
 
@@ -33,7 +39,7 @@ describe('AnswerQuizDto', () => {
 
       for (const answer of invalidAnswers) {
         const item = plainToInstance(AnswerItem, {
-          questionId: 'q1',
+          questionId: VALID_UUID,
           answer,
         });
 
@@ -64,7 +70,7 @@ describe('AnswerQuizDto', () => {
 
     it('should reject missing answer', async () => {
       const item = plainToInstance(AnswerItem, {
-        questionId: 'q1',
+        questionId: VALID_UUID,
       });
 
       const errors = await validate(item);
@@ -77,11 +83,11 @@ describe('AnswerQuizDto', () => {
     it('should validate with 5 correct answers', async () => {
       const dto = plainToInstance(AnswerQuizDto, {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2', answer: 'B' },
-          { questionId: 'q3', answer: 'C' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'B' },
+          { questionId: VALID_UUID, answer: 'A' },
+          { questionId: VALID_UUID_2, answer: 'B' },
+          { questionId: VALID_UUID_3, answer: 'C' },
+          { questionId: VALID_UUID_4, answer: 'A' },
+          { questionId: VALID_UUID_5, answer: 'B' },
         ],
       });
 
@@ -109,11 +115,11 @@ describe('AnswerQuizDto', () => {
     it('should validate nested answer items', async () => {
       const dto = plainToInstance(AnswerQuizDto, {
         answers: [
-          { questionId: 'q1', answer: 'INVALID' },
-          { questionId: 'q2', answer: 'B' },
-          { questionId: 'q3', answer: 'C' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'B' },
+          { questionId: VALID_UUID, answer: 'INVALID' },
+          { questionId: VALID_UUID_2, answer: 'B' },
+          { questionId: VALID_UUID_3, answer: 'C' },
+          { questionId: VALID_UUID_4, answer: 'A' },
+          { questionId: VALID_UUID_5, answer: 'B' },
         ],
       });
 
@@ -124,11 +130,11 @@ describe('AnswerQuizDto', () => {
     it('should validate all items in array', async () => {
       const dto = plainToInstance(AnswerQuizDto, {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2' },
-          { questionId: 'q3', answer: 'C' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'B' },
+          { questionId: VALID_UUID, answer: 'A' },
+          { questionId: VALID_UUID_2 },
+          { questionId: VALID_UUID_3, answer: 'C' },
+          { questionId: VALID_UUID_4, answer: 'A' },
+          { questionId: VALID_UUID_5, answer: 'B' },
         ],
       });
 
@@ -148,9 +154,9 @@ describe('AnswerQuizDto', () => {
     it('should accept more or less than 5 answers (service validates count)', async () => {
       const dto = plainToInstance(AnswerQuizDto, {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2', answer: 'B' },
-          { questionId: 'q3', answer: 'C' },
+          { questionId: VALID_UUID, answer: 'A' },
+          { questionId: VALID_UUID_2, answer: 'B' },
+          { questionId: VALID_UUID_3, answer: 'C' },
         ],
       });
 
@@ -162,16 +168,16 @@ describe('AnswerQuizDto', () => {
       const dto = plainToInstance(AnswerQuizDto, {
         answers: [
           {
-            questionId: '123e4567-e89b-12d3-a456-426614174000',
+            questionId: VALID_UUID,
             answer: 'A',
           },
           {
-            questionId: '987fcdeb-51a2-43f7-8b6d-123456789abc',
+            questionId: VALID_UUID_2,
             answer: 'B',
           },
-          { questionId: 'q3', answer: 'C' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'B' },
+          { questionId: VALID_UUID_3, answer: 'C' },
+          { questionId: VALID_UUID_4, answer: 'A' },
+          { questionId: VALID_UUID_5, answer: 'B' },
         ],
       });
 

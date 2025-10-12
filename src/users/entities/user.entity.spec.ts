@@ -10,6 +10,7 @@ describe('User Entity', () => {
   beforeEach(() => {
     user = new User();
     user.id = 'test-uuid';
+    user.username = 'test_user';
     user.email = 'test@example.com';
     user.password = 'plainPassword';
     user.role = UserRole.USER;

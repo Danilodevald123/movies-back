@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { QuizService } from './quiz.service';
 import { Question } from './entities/question.entity';
 import { UserAnswer } from './entities/user-answer.entity';
 import { QUESTION_REPOSITORY } from './repositories/question.repository.interface';
 import { USER_ANSWER_REPOSITORY } from './repositories/user-answer.repository.interface';
-import { AnswerQuizDto } from './dto/answer-quiz.dto';
+import { AnswerQuizDto, AnswerOption } from './dto/answer-quiz.dto';
 
 describe('QuizService', () => {
   let service: QuizService;
@@ -18,7 +17,7 @@ describe('QuizService', () => {
       optionA: 'Tatooine',
       optionB: 'Dagobah',
       optionC: 'Endor',
-      correctAnswer: 'B',
+      correctAnswer: AnswerOption.B,
       active: true,
     },
     {
@@ -27,7 +26,7 @@ describe('QuizService', () => {
       optionA: 'Wookiee',
       optionB: 'Ewok',
       optionC: 'Hutt',
-      correctAnswer: 'A',
+      correctAnswer: AnswerOption.A,
       active: true,
     },
     {
@@ -36,7 +35,7 @@ describe('QuizService', () => {
       optionA: 'Qui-Gon Jinn',
       optionB: 'Mace Windu',
       optionC: 'Yoda',
-      correctAnswer: 'A',
+      correctAnswer: AnswerOption.A,
       active: true,
     },
     {
@@ -45,7 +44,7 @@ describe('QuizService', () => {
       optionA: 'Darth Maul',
       optionB: 'Count Dooku',
       optionC: 'Palpatine',
-      correctAnswer: 'C',
+      correctAnswer: AnswerOption.C,
       active: true,
     },
     {
@@ -54,7 +53,7 @@ describe('QuizService', () => {
       optionA: 'Verde',
       optionB: 'Rojo',
       optionC: 'Púrpura',
-      correctAnswer: 'C',
+      correctAnswer: AnswerOption.C,
       active: true,
     },
   ];
@@ -65,12 +64,9 @@ describe('QuizService', () => {
   };
 
   const mockUserAnswerRepository = {
+    create: jest.fn(),
     save: jest.fn(),
     countCorrectAnswersByUser: jest.fn(),
-  };
-
-  const mockUserAnswerRepo = {
-    create: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -84,10 +80,6 @@ describe('QuizService', () => {
         {
           provide: USER_ANSWER_REPOSITORY,
           useValue: mockUserAnswerRepository,
-        },
-        {
-          provide: getRepositoryToken(UserAnswer),
-          useValue: mockUserAnswerRepo,
         },
       ],
     }).compile();
@@ -158,11 +150,11 @@ describe('QuizService', () => {
     const userId = 'user-123';
     const validAnswerDto: AnswerQuizDto = {
       answers: [
-        { questionId: 'q1', answer: 'B' },
-        { questionId: 'q2', answer: 'A' },
-        { questionId: 'q3', answer: 'A' },
-        { questionId: 'q4', answer: 'C' },
-        { questionId: 'q5', answer: 'C' },
+        { questionId: 'q1', answer: AnswerOption.B },
+        { questionId: 'q2', answer: AnswerOption.A },
+        { questionId: 'q3', answer: AnswerOption.A },
+        { questionId: 'q4', answer: AnswerOption.C },
+        { questionId: 'q5', answer: AnswerOption.C },
       ],
     };
 
@@ -171,7 +163,7 @@ describe('QuizService', () => {
         return Promise.resolve(mockQuestions.find((q) => q.id === id));
       });
 
-      mockUserAnswerRepo.create.mockImplementation(
+      mockUserAnswerRepository.create.mockImplementation(
         (data: Partial<UserAnswer>) => data,
       );
       mockUserAnswerRepository.save.mockResolvedValue({});
@@ -180,8 +172,8 @@ describe('QuizService', () => {
     it('should throw BadRequestException if not exactly 5 answers', async () => {
       const invalidDto: AnswerQuizDto = {
         answers: [
-          { questionId: 'q1', answer: 'B' },
-          { questionId: 'q2', answer: 'A' },
+          { questionId: 'q1', answer: AnswerOption.B },
+          { questionId: 'q2', answer: AnswerOption.A },
         ],
       };
 
@@ -196,11 +188,11 @@ describe('QuizService', () => {
     it('should throw NotFoundException if question does not exist', async () => {
       const invalidDto: AnswerQuizDto = {
         answers: [
-          { questionId: 'invalid-id', answer: 'A' },
-          { questionId: 'q2', answer: 'A' },
-          { questionId: 'q3', answer: 'A' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'A' },
+          { questionId: 'invalid-id', answer: AnswerOption.A },
+          { questionId: 'q2', answer: AnswerOption.A },
+          { questionId: 'q3', answer: AnswerOption.A },
+          { questionId: 'q4', answer: AnswerOption.A },
+          { questionId: 'q5', answer: AnswerOption.A },
         ],
       };
 
@@ -219,18 +211,18 @@ describe('QuizService', () => {
 
       expect(result.totalQuestions).toBe(5);
       expect(result.correctAnswers).toBe(5);
-      expect(result.score).toBe(100);
+      expect(result.score).toBe(5);
       expect(result.answers).toHaveLength(5);
     });
 
     it('should calculate score correctly with mixed answers', async () => {
       const mixedAnswers: AnswerQuizDto = {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2', answer: 'A' },
-          { questionId: 'q3', answer: 'B' },
-          { questionId: 'q4', answer: 'C' },
-          { questionId: 'q5', answer: 'C' },
+          { questionId: 'q1', answer: AnswerOption.A },
+          { questionId: 'q2', answer: AnswerOption.A },
+          { questionId: 'q3', answer: AnswerOption.B },
+          { questionId: 'q4', answer: AnswerOption.C },
+          { questionId: 'q5', answer: AnswerOption.C },
         ],
       };
 
@@ -238,7 +230,7 @@ describe('QuizService', () => {
 
       expect(result.totalQuestions).toBe(5);
       expect(result.correctAnswers).toBe(3);
-      expect(result.score).toBe(60);
+      expect(result.score).toBe(3);
     });
 
     it('should return detailed answer results with selected and correct texts', async () => {
@@ -262,11 +254,11 @@ describe('QuizService', () => {
     it('should show incorrect answer details when wrong', async () => {
       const wrongAnswer: AnswerQuizDto = {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2', answer: 'A' },
-          { questionId: 'q3', answer: 'A' },
-          { questionId: 'q4', answer: 'C' },
-          { questionId: 'q5', answer: 'C' },
+          { questionId: 'q1', answer: AnswerOption.A },
+          { questionId: 'q2', answer: AnswerOption.A },
+          { questionId: 'q3', answer: AnswerOption.A },
+          { questionId: 'q4', answer: AnswerOption.C },
+          { questionId: 'q5', answer: AnswerOption.C },
         ],
       };
 
@@ -290,10 +282,10 @@ describe('QuizService', () => {
     it('should save all user answers to repository', async () => {
       await service.submitAnswers(userId, validAnswerDto);
 
-      expect(mockUserAnswerRepo.create).toHaveBeenCalledTimes(5);
+      expect(mockUserAnswerRepository.create).toHaveBeenCalledTimes(5);
       expect(mockUserAnswerRepository.save).toHaveBeenCalledTimes(5);
 
-      expect(mockUserAnswerRepo.create).toHaveBeenCalledWith({
+      expect(mockUserAnswerRepository.create).toHaveBeenCalledWith({
         userId,
         questionId: 'q1',
         selectedAnswer: 'B',
@@ -304,11 +296,11 @@ describe('QuizService', () => {
     it('should handle all incorrect answers', async () => {
       const allWrong: AnswerQuizDto = {
         answers: [
-          { questionId: 'q1', answer: 'A' },
-          { questionId: 'q2', answer: 'B' },
-          { questionId: 'q3', answer: 'B' },
-          { questionId: 'q4', answer: 'A' },
-          { questionId: 'q5', answer: 'A' },
+          { questionId: 'q1', answer: AnswerOption.A },
+          { questionId: 'q2', answer: AnswerOption.B },
+          { questionId: 'q3', answer: AnswerOption.B },
+          { questionId: 'q4', answer: AnswerOption.A },
+          { questionId: 'q5', answer: AnswerOption.A },
         ],
       };
 
