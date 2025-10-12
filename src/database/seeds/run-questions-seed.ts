@@ -5,7 +5,6 @@ import { UserAnswer } from '../../quiz/entities/user-answer.entity';
 import { User } from '../../users/entities/user.entity';
 import { Movie } from '../../movies/entities/movie.entity';
 import { seedQuestions } from './questions.seed';
-import { seedUsers } from './users.seed';
 
 config();
 
@@ -28,13 +27,10 @@ async function runSeed() {
     await dataSource.initialize();
     console.log('🔌 Conexión a la base de datos establecida\n');
 
-    console.log('👥 Seeding usuarios...');
-    await seedUsers(dataSource);
-
-    console.log('❓ Seeding preguntas del quiz...');
+    console.log('❓ Seeding preguntas...');
     await seedQuestions(dataSource);
 
-    console.log('\n✅ Seed completado exitosamente');
+    console.log('\n✅ Seed de preguntas completado');
   } catch (error) {
     console.error('❌ Error ejecutando el seed:', error);
     process.exit(1);

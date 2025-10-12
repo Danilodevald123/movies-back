@@ -22,11 +22,15 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v",
+    "docker:rebuild": "docker-compose down -v && docker-compose up --build",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d src/config/typeorm-cli.config.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/config/typeorm-cli.config.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/config/typeorm-cli.config.ts",
-    "seed:questions": "ts-node -r tsconfig-paths/register src/database/seeds/run-seed.ts"
+    "seed:users": "ts-node -r tsconfig-paths/register src/database/seeds/run-users-seed.ts",
+    "seed:questions": "ts-node -r tsconfig-paths/register src/database/seeds/run-questions-seed.ts",
+    "seed:all": "npm run seed:users && npm run seed:questions"
   },
   "prepare": "husky",
   "dependencies": {

@@ -1,0 +1,27 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Notify deployment start
+        run: |
+          echo "🚀 Deployment to Railway triggered"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+
+      
+      - name: Wait for Railway deployment
+        run: |
+          echo "⏳ Railway is deploying the application..."
+          echo "Check Railway dashboard for deployment status"
