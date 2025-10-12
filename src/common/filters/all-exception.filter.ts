@@ -33,7 +33,6 @@ export class AllExceptionFilter implements ExceptionFilter {
       return this.handleHttpException(exception, request, response);
     }
 
-    // Error no controlado
     const status = HttpStatus.INTERNAL_SERVER_ERROR;
     const errorResponse = {
       statusCode: status,
@@ -65,7 +64,6 @@ export class AllExceptionFilter implements ExceptionFilter {
     } else {
       const responseObj = exceptionResponse as Record<string, unknown>;
 
-      // Manejar errores de validación con múltiples mensajes
       if (Array.isArray(responseObj.message)) {
         errorMessage = responseObj.message.join(', ');
       } else if (typeof responseObj.message === 'string') {
