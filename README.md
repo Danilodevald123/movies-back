@@ -41,22 +41,25 @@ git clone https://github.com/Danilodevald123/movies-back.git
 cd movies-back
 ```
 
-### 2. Configurar variables de entorno
-
-```bash
-cp .env.example .env
-```
-
-### 3. Instalar dependencias (para IntelliSense del IDE)
-
-```bash
-npm install
-```
-
-### 4. Levantar todos los servicios
+### 2. Levantar todos los servicios
 
 ```bash
 docker-compose up --build
+```
+
+✨ **¡Listo!** El proyecto funciona con valores por defecto. No necesitas crear el archivo `.env`.
+
+> **Opcional**: Si deseas personalizar las credenciales o configuración, puedes crear un archivo `.env` basado en `.env.example`:
+>
+> ```bash
+> cp .env.example .env
+> # Editar .env con tus valores personalizados
+> ```
+
+### 3. Instalar dependencias (opcional, solo para IntelliSense del IDE)
+
+```bash
+npm install
 ```
 
 Esto levantará:
@@ -167,3 +170,39 @@ npm run test
 Una vez levantada la aplicación, acceder a:
 
 **Swagger UI**: http://localhost:3000/api/docs
+
+## 🔧 Troubleshooting
+
+### Error: "password authentication failed for user"
+
+Si estás reutilizando volúmenes de Docker de ejecuciones previas con credenciales diferentes:
+
+```bash
+# Detener y limpiar volúmenes
+docker-compose down -v
+
+# Volver a levantar
+docker-compose up --build
+```
+
+### Puerto en uso
+
+Si los puertos `3000`, `5433` o `5050` ya están ocupados:
+
+```bash
+# Ver qué proceso usa el puerto (Windows)
+netstat -ano | findstr :3000
+
+# Detener contenedores
+docker-compose down
+```
+
+### Verificar estado de contenedores
+
+```bash
+# Ver contenedores activos
+docker-compose ps
+
+# Ver logs
+docker-compose logs -f app
+```

@@ -33,9 +33,6 @@ COPY --from=builder /app/dist ./dist
 # Copy source files needed for migrations and seeds
 COPY --from=builder /app/src ./src
 
-# Copy .env file (will be overridden by docker-compose env_file)
-COPY .env* ./
-
 # Expose port
 EXPOSE 3000
 
