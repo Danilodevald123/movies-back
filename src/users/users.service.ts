@@ -11,12 +11,14 @@ import {
   IUserRepository,
   USER_REPOSITORY,
 } from './repositories/user.repository.interface';
+import { PasswordService } from '../common/services/password.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
+    private readonly passwordService: PasswordService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
@@ -36,7 +38,13 @@ export class UsersService {
       throw new ConflictException('Username already exists');
     }
 
-    const user = this.userRepository.create(createUserDto);
+    const hashedPassword = await this.passwordService.hash(
+      createUserDto.password,
+    );
+    const user = this.userRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
     const savedUser = await this.userRepository.save(user);
     return UserResponseDto.fromEntity(savedUser);
   }

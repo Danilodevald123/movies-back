@@ -20,8 +20,6 @@ describe('JwtStrategy', () => {
     password: 'hashed',
     createdAt: new Date(),
     updatedAt: new Date(),
-    hashPassword: jest.fn(),
-    comparePassword: jest.fn(),
   };
 
   beforeEach(async () => {

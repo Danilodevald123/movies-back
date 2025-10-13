@@ -4,10 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  BeforeInsert,
 } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { BCRYPT_SALT_ROUNDS } from '../../common/constants/app.constants';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -40,16 +37,4 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @BeforeInsert()
-  async hashPassword() {
-    if (this.password) {
-      const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
-      this.password = await bcrypt.hash(this.password, salt);
-    }
-  }
-
-  async comparePassword(attempt: string): Promise<boolean> {
-    return await bcrypt.compare(attempt, this.password);
-  }
 }

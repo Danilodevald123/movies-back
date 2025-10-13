@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 import { User, UserRole } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { USER_REPOSITORY } from './repositories/user.repository.interface';
+import { PasswordService } from '../common/services/password.service';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -27,6 +28,11 @@ describe('UsersService', () => {
     findAll: jest.fn(),
   };
 
+  const mockPasswordService = {
+    hash: jest.fn(),
+    compare: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,6 +40,10 @@ describe('UsersService', () => {
         {
           provide: USER_REPOSITORY,
           useValue: mockRepository,
+        },
+        {
+          provide: PasswordService,
+          useValue: mockPasswordService,
         },
       ],
     }).compile();
@@ -55,8 +65,10 @@ describe('UsersService', () => {
     };
 
     it('should create a new user', async () => {
+      const hashedPassword = 'hashedPassword123';
       mockRepository.findByEmail.mockResolvedValue(null);
       mockRepository.findByUsername.mockResolvedValue(null);
+      mockPasswordService.hash.mockResolvedValue(hashedPassword);
       mockRepository.create.mockReturnValue(mockUser);
       mockRepository.save.mockResolvedValue(mockUser);
 
@@ -68,7 +80,13 @@ describe('UsersService', () => {
       expect(mockRepository.findByUsername).toHaveBeenCalledWith(
         createUserDto.username,
       );
-      expect(mockRepository.create).toHaveBeenCalledWith(createUserDto);
+      expect(mockPasswordService.hash).toHaveBeenCalledWith(
+        createUserDto.password,
+      );
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...createUserDto,
+        password: hashedPassword,
+      });
       expect(mockRepository.save).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({
         id: mockUser.id,

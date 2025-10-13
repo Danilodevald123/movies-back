@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
+import { PasswordService } from '../common/services/password.service';
 
 export interface JwtPayload {
   sub: string;
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly passwordService: PasswordService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
@@ -36,7 +38,10 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponse> {
     const user = await this.usersService.findByEmail(loginDto.email);
 
-    if (!user || !(await user.comparePassword(loginDto.password))) {
+    if (
+      !user ||
+      !(await this.passwordService.compare(loginDto.password, user.password))
+    ) {
       throw new UnauthorizedException('Invalid credentials');
     }
     return this.generateTokens(UserResponseDto.fromEntity(user));

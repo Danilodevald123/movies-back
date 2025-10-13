@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { User, UserRole } from '../users/entities/user.entity';
+import { PasswordService } from '../common/services/password.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -19,7 +20,6 @@ describe('AuthService', () => {
     role: UserRole.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
-    comparePassword: jest.fn(),
   };
 
   const mockUserResponse = {
@@ -46,6 +46,11 @@ describe('AuthService', () => {
     get: jest.fn(),
   };
 
+  const mockPasswordService = {
+    hash: jest.fn(),
+    compare: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,6 +66,10 @@ describe('AuthService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: PasswordService,
+          useValue: mockPasswordService,
         },
       ],
     }).compile();
@@ -141,27 +150,26 @@ describe('AuthService', () => {
     };
 
     it('should login successfully with valid credentials', async () => {
-      const comparePasswordMock = jest.fn().mockResolvedValue(true);
-      const user = {
-        ...mockUser,
-        comparePassword: comparePasswordMock,
-      } as unknown as User;
-      mockUsersService.findByEmail.mockResolvedValue(user);
+      mockUsersService.findByEmail.mockResolvedValue(mockUser as User);
+      mockPasswordService.compare.mockResolvedValue(true);
       mockJwtService.sign.mockReturnValueOnce('access-token');
       mockJwtService.sign.mockReturnValueOnce('refresh-token');
 
       const result = await service.login(loginDto);
 
       expect(mockUsersService.findByEmail).toHaveBeenCalledWith(loginDto.email);
-      expect(comparePasswordMock).toHaveBeenCalledWith(loginDto.password);
+      expect(mockPasswordService.compare).toHaveBeenCalledWith(
+        loginDto.password,
+        mockUser.password,
+      );
       expect(result).toEqual({
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          id: mockUser.id,
+          username: mockUser.username,
+          email: mockUser.email,
+          role: mockUser.role,
+          createdAt: mockUser.createdAt,
+          updatedAt: mockUser.updatedAt,
         },
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
@@ -177,12 +185,8 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
-      const comparePasswordMock = jest.fn().mockResolvedValue(false);
-      const user = {
-        ...mockUser,
-        comparePassword: comparePasswordMock,
-      } as unknown as User;
-      mockUsersService.findByEmail.mockResolvedValue(user);
+      mockUsersService.findByEmail.mockResolvedValue(mockUser as User);
+      mockPasswordService.compare.mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
