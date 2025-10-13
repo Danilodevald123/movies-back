@@ -47,15 +47,6 @@ cd movies-back
 docker-compose up --build
 ```
 
-✨ **¡Listo!** El proyecto funciona con valores por defecto. No necesitas crear el archivo `.env`.
-
-> **Opcional**: Si deseas personalizar las credenciales o configuración, puedes crear un archivo `.env` basado en `.env.example`:
->
-> ```bash
-> cp .env.example .env
-> # Editar .env con tus valores personalizados
-> ```
-
 ### 3. Instalar dependencias (opcional, solo para IntelliSense del IDE)
 
 ```bash
