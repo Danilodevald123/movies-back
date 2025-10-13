@@ -6,12 +6,14 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Injectable,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+@Injectable()
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionFilter.name);
+  constructor(private readonly logger: Logger) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -23,9 +25,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       exception.name === 'QueryFailedError' &&
       exception.message.includes('invalid input syntax for type uuid')
     ) {
-      const badRequestException = new BadRequestException(
-        'Uno o más IDs proporcionados no son válidos',
-      );
+      const badRequestException = new BadRequestException('invalid ID');
       return this.handleHttpException(badRequestException, request, response);
     }
 

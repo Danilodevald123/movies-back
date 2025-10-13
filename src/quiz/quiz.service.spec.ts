@@ -181,7 +181,7 @@ describe('QuizService', () => {
         BadRequestException,
       );
       await expect(service.submitAnswers(userId, invalidDto)).rejects.toThrow(
-        'Debes responder las 5 preguntas',
+        'You must answer all 5 questions',
       );
     });
 

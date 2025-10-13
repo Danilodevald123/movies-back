@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
-  BeforeUpdate,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_SALT_ROUNDS } from '../../common/constants/app.constants';
@@ -43,7 +42,6 @@ export class User {
   updatedAt: Date;
 
   @BeforeInsert()
-  @BeforeUpdate()
   async hashPassword() {
     if (this.password) {
       const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
