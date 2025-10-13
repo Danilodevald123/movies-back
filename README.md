@@ -15,8 +15,8 @@ Backend API para gestión de películas de Star Wars con sistema de autenticaci�
 
 ## Deploy
 
-- El proyecto se encuentra deployado en Railway.
-- El swagger para probar el proyecto deployado se encuentra en https://movies-back-production.up.railway.app/api/docs
+- El proyecto se encuentra en Railway.
+- El swagger para probar el proyecto se encuentra en https://movies-back-production.up.railway.app/api/docs
 - El que saca mas puntos en el Quiz se gana una cerveza.
 
 ## 📋 Prerequisitos local

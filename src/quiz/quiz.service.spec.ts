@@ -119,7 +119,7 @@ describe('QuizService', () => {
 
       await expect(service.getQuestions()).rejects.toThrow(NotFoundException);
       await expect(service.getQuestions()).rejects.toThrow(
-        'No hay suficientes preguntas disponibles en el sistema',
+        'Not enough questions available in the system',
       );
     });
 
@@ -202,7 +202,7 @@ describe('QuizService', () => {
         NotFoundException,
       );
       await expect(service.submitAnswers(userId, invalidDto)).rejects.toThrow(
-        'Pregunta con ID invalid-id no encontrada',
+        'Question with ID invalid-id not found',
       );
     });
 

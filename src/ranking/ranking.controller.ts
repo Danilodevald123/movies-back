@@ -28,15 +28,16 @@ export class RankingController {
   @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get user rankings',
-    description:
-      'Obtiene el ranking de todos los usuarios ordenados por puntaje',
+    description: 'Retrieves the ranking of all users sorted by score',
   })
   @ApiResponse({
     status: 200,
-    description: 'Ranking obtenido exitosamente',
+    description: 'Ranking retrieved successfully',
     type: RankingResponseDto,
   })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
+  })
   async getRanking(): Promise<RankingResponseDto> {
     return this.rankingService.getRanking();
   }
@@ -45,20 +46,22 @@ export class RankingController {
   @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get my ranking position',
-    description: 'Obtiene la posición en el ranking del usuario autenticado',
+    description: 'Retrieves the ranking position of the authenticated user',
   })
   @ApiResponse({
     status: 200,
-    description: 'Posición obtenida exitosamente',
+    description: 'Position retrieved successfully',
     type: RankingItemDto,
   })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
+  })
   async getMyRanking(
     @CurrentUser() user: JwtUser,
   ): Promise<RankingItemDto | { message: string }> {
     const ranking = await this.rankingService.getUserRanking(user.id);
     if (!ranking) {
-      return { message: 'Aún no tienes puntaje. Responde el quiz primero.' };
+      return { message: 'You do not have a score yet. Answer the quiz first.' };
     }
     return ranking;
   }

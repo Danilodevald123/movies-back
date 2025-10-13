@@ -31,7 +31,7 @@ export class QuizService {
 
     if (questions.length < QUIZ_QUESTIONS_COUNT) {
       throw new NotFoundException(
-        'No hay suficientes preguntas disponibles en el sistema',
+        'Not enough questions available in the system',
       );
     }
 
@@ -52,7 +52,7 @@ export class QuizService {
   ): Promise<QuizResultDto> {
     if (answerQuizDto.answers.length !== QUIZ_QUESTIONS_COUNT) {
       throw new BadRequestException(
-        `Debes responder las ${QUIZ_QUESTIONS_COUNT} preguntas`,
+        `You must answer all ${QUIZ_QUESTIONS_COUNT} questions`,
       );
     }
 
@@ -60,7 +60,7 @@ export class QuizService {
     const uniqueIds = new Set(questionIds);
     if (uniqueIds.size !== questionIds.length) {
       throw new BadRequestException(
-        'No puedes responder la misma pregunta más de una vez',
+        'You cannot answer the same question more than once',
       );
     }
 
@@ -74,7 +74,7 @@ export class QuizService {
 
       if (!question) {
         throw new NotFoundException(
-          `Pregunta con ID ${answer.questionId} no encontrada`,
+          `Question with ID ${answer.questionId} not found`,
         );
       }
 

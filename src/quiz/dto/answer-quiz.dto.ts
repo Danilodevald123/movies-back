@@ -10,26 +10,28 @@ export enum AnswerOption {
 
 export class AnswerItem {
   @ApiProperty({
-    description: 'ID de la pregunta',
+    description:
+      'Question ID (must match the UUID received from GET /quiz/questions)',
     example: '961303df-aa80-496f-a968-3d69986248fc',
   })
-  @IsUUID('4', { message: 'questionId debe ser un UUID válido' })
+  @IsUUID('4', { message: 'questionId must be a valid UUID' })
   questionId: string;
 
   @ApiProperty({
-    description: 'Respuesta seleccionada (A, B o C)',
+    description: 'Selected answer (A, B or C)',
     enum: AnswerOption,
     example: 'B',
   })
   @IsEnum(AnswerOption, {
-    message: 'answer debe ser uno de los siguientes valores: A, B, C',
+    message: 'answer must be one of the following values: A, B, C',
   })
   answer: AnswerOption;
 }
 
 export class AnswerQuizDto {
   @ApiProperty({
-    description: 'Array con las 5 respuestas del quiz',
+    description:
+      'Array with the 5 quiz answers. IMPORTANT: The questionId values must exactly match the UUIDs received from the GET /quiz/questions endpoint.',
     type: [AnswerItem],
     example: [
       { questionId: '961303df-aa80-496f-a968-3d69986248fc', answer: 'B' },

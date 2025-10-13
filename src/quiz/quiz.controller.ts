@@ -43,16 +43,18 @@ export class QuizController {
   })
   @ApiOperation({
     summary: 'Get 5 random Star Wars questions',
-    description: 'Obtiene 5 preguntas aleatorias de Star Wars para responder',
+    description: 'Retrieves 5 random Star Wars questions to answer',
   })
   @ApiResponse({
     status: 200,
-    description: 'Preguntas obtenidas exitosamente',
+    description: 'Questions retrieved successfully',
     type: [QuestionDto],
   })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
+  })
   @ApiNotFoundResponse({
-    description: 'No hay suficientes preguntas disponibles',
+    description: 'Not enough questions available',
   })
   async getQuestions(): Promise<QuestionDto[]> {
     return this.quizService.getQuestions();
@@ -65,18 +67,22 @@ export class QuizController {
   })
   @ApiOperation({
     summary: 'Submit quiz answers',
-    description: 'Envía las respuestas del quiz y obtiene los resultados',
+    description:
+      'Submits quiz answers and returns the results. IMPORTANT: You must send exactly the 5 question IDs received from the GET /quiz/questions endpoint in the request body. Each questionId must match the UUIDs provided in the questions response.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Respuestas evaluadas exitosamente',
+    description: 'Answers evaluated successfully',
     type: QuizResultDto,
   })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
-  @ApiBadRequestResponse({
-    description: 'Datos inválidos o pregunta ya respondida',
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
   })
-  @ApiNotFoundResponse({ description: 'Pregunta no encontrada' })
+  @ApiBadRequestResponse({
+    description:
+      'Invalid data, question already answered, or question IDs do not match the ones received from GET /quiz/questions',
+  })
+  @ApiNotFoundResponse({ description: 'Question not found' })
   async submitAnswers(
     @CurrentUser() user: JwtUser,
     @Body() answerQuizDto: AnswerQuizDto,
@@ -88,11 +94,11 @@ export class QuizController {
   @Throttle({ default: { limit: THROTTLE_LIMIT_DEFAULT, ttl: THROTTLE_TTL } })
   @ApiOperation({
     summary: 'Get user score',
-    description: 'Obtiene el puntaje total del usuario autenticado',
+    description: 'Retrieves the total score of the authenticated user',
   })
   @ApiResponse({
     status: 200,
-    description: 'Puntaje obtenido exitosamente',
+    description: 'Score retrieved successfully',
     schema: {
       type: 'object',
       properties: {
@@ -100,7 +106,9 @@ export class QuizController {
       },
     },
   })
-  @ApiUnauthorizedResponse({ description: 'No autorizado' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - invalid or missing JWT token',
+  })
   async getMyScore(@CurrentUser() user: JwtUser): Promise<{ score: number }> {
     const score = await this.quizService.getUserScore(user.id);
     return { score };
